@@ -1,28 +1,42 @@
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:neo_finance/models/operation.dart';
+
+import '../database_provider.dart';
 
 class AddTransactionController extends GetxController {
   final Rx<String> _transactionType = ''.obs;
-  final Rx<DateTime> _selectedDate = DateTime.now().obs;
-  final Rx<String> _selectedCategory = Rx<String>('');
-  final Rx<String> _selectedMode = Rx<String>('');
-  final Rx<String> _selectedTime = ''.obs;
+  final Rx<String> _selectedDate = DateFormat.yMd().format(DateTime.now()).obs;
+  final Rx<String> _selectedOperation = Rx<String>('');
+  final Rx<String> _selectedFrom = Rx<String>('');
+  final Rx<String> _selectedTo = ''.obs;
   // DateFormat('hh:mm a').format(DateTime.now()).obs;
   final Rx<String> _selectedImage = Rx<String>('');
+  final Rx<List<String>> _operationsButtons = Rx<List<String>>([]);
 
-  DateTime get selectedDate => _selectedDate.value;
-  String get selectedTime => _selectedTime.value;
-  String get selectedCategory => _selectedCategory.value;
-  String get selectedMode => _selectedMode.value;
+  String get selectedDate => _selectedDate.value;
+  String get selectedTo => _selectedTo.value;
+  String get selectedOperation => _selectedOperation.value;
+  String get selectedFrom => _selectedFrom.value;
   String get selectedImage => _selectedImage.value;
 
   String get transactionType => _transactionType.value;
+  List<String> get operationsButton => _operationsButtons.value;
 
   changeTransactionType(String tt) => _transactionType.value = tt;
-  updateSelectedCategory(String category) => _selectedCategory.value = category;
-  updateSelectedMode(String mode) => _selectedMode.value = mode;
+  updateSelectedOperation(String category) => _selectedOperation.value = category;
+  updateSelectedFrom(String from) => _selectedFrom.value = from;
 
-  updateSelectedDate(DateTime date) => _selectedDate.value = date;
-  updateSelectedTime(String time) => _selectedTime.value = time;
+  updateSelectedDate(String date) => _selectedDate.value = date;
+  updateSelectedTo(String to) => _selectedTo.value = to;
+
+  updateOperationsButtons() async {
+    List<Map<String, dynamic>> operations =
+        await DatabaseProvider.queryOperations();
+    _operationsButtons.value = List.generate(operations.length, (index) {
+      return operations[index]['name'];
+    });
+  }
 
   updateSelectedImage(String path) {
     _selectedImage.value = path;

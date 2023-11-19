@@ -54,7 +54,9 @@ class AddTransactionScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: InputField(
-                          hint: DateFormat.yMd().format(_addTransactionController.selectedDate),
+                          hint: _addTransactionController.selectedDate.isNotEmpty
+                  ? _addTransactionController.selectedDate
+                      : DateFormat.yMd().format(now),
                           label: 'Date',
                           widget: IconButton(
                             onPressed: () => _getDateFromUser(context),
@@ -70,8 +72,8 @@ class AddTransactionScreen extends StatelessWidget {
                       ),
                       Expanded(
                         child: InputField(
-                          hint: _addTransactionController.selectedTime.isNotEmpty
-                              ? _addTransactionController.selectedTime
+                          hint: _addTransactionController.selectedTo.isNotEmpty
+                              ? _addTransactionController.selectedTo
                               : DateFormat('hh:mm a').format(now),
                           label: 'Time',
                           widget: IconButton(
@@ -86,8 +88,8 @@ class AddTransactionScreen extends StatelessWidget {
                     ],
                   ),
                   InputField(
-                    hint: _addTransactionController.selectedCategory.isNotEmpty
-                        ? _addTransactionController.selectedCategory
+                    hint: _addTransactionController.selectedOperation.isNotEmpty
+                        ? _addTransactionController.selectedOperation
                         : categories[0],
                     label: 'Category',
                     widget: IconButton(
@@ -97,8 +99,8 @@ class AddTransactionScreen extends StatelessWidget {
                         )),
                   ),
                   InputField(
-                    hint: _addTransactionController.selectedMode.isNotEmpty
-                        ? _addTransactionController.selectedMode
+                    hint: _addTransactionController.selectedFrom.isNotEmpty
+                        ? _addTransactionController.selectedFrom
                         : cashModes[0],
                     isAmount: true,
                     label: 'Mode',
@@ -136,7 +138,7 @@ class AddTransactionScreen extends StatelessWidget {
       ),
     ).then((value) => formatedTime = value!.format(context));
 
-    _addTransactionController.updateSelectedTime(formatedTime!);
+    _addTransactionController.updateSelectedTo(formatedTime!);
   }
 
   _getDateFromUser(BuildContext context) async {
@@ -148,7 +150,7 @@ class AddTransactionScreen extends StatelessWidget {
 
     if (pickerDate != null) {
       _addTransactionController
-          .updateSelectedDate(pickerDate);
+          .updateSelectedDate(DateFormat.yMd().format(pickerDate));
     }
   }
 
@@ -165,8 +167,8 @@ class AddTransactionScreen extends StatelessWidget {
             return ListTile(
               onTap: () {
                 isCategories
-                    ? _addTransactionController.updateSelectedCategory(data)
-                    : _addTransactionController.updateSelectedMode(data);
+                    ? _addTransactionController.updateSelectedOperation(data)
+                    : _addTransactionController.updateSelectedFrom(data);
                 Get.back();
               },
               title: Text(data),

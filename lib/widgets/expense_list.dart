@@ -9,7 +9,6 @@ class ExpenseList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx((){
       return Expanded(
         child: ListView.builder(
           itemCount: _homeController.myTransactions.length,
@@ -17,9 +16,9 @@ class ExpenseList extends StatelessWidget {
             final transaction = _homeController.myTransactions[i];
             // final bool isIncome = transaction.type == 'Income' ? true : false;
             final text =
-                '${transaction.amount}';
-            final formatAmount = '- $text';
-            return Text(formatAmount);
+                '${transaction.date} ${transaction.operation} ${transaction.from} ${transaction.to} ${transaction.amount}';
+            // final formatAmount = '- $text';
+            return Text(text);
 /*        return transaction.date ==
               DateFormat.yMd().format(_homeController.selectedDate)
               ? GestureDetector(
@@ -36,7 +35,5 @@ class ExpenseList extends StatelessWidget {
           },
         ),
       );
-    });
   }
-  
 }

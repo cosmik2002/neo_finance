@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../database_provider.dart';
+import '../google_sheet_provider.dart';
 import '../models/transaction.dart';
 
 class HomeController extends GetxController {
@@ -13,8 +14,9 @@ class HomeController extends GetxController {
   List<TransactionModel> get myTransactions => _myTransactions.value;
 
   @override
-  onInit() {
+  onInit() async {
     super.onInit();
+    await GoogleSheetsIntegration().getDataFromGoogleSheets();
     getTransactions();
   }
   incCounter() {
@@ -25,10 +27,14 @@ class HomeController extends GetxController {
     final List<TransactionModel> transactionsFromDB = [];
     List<Map<String, dynamic>> transactions =
     await DatabaseProvider.queryTransactions();
-    transactionsFromDB.assignAll(transactions.reversed
-        .map((data) => TransactionModel().fromJson(data))
-        .toList());
-    _myTransactions.value = transactionsFromDB;
+    // transactionsFromDB.assignAll(transactions.reversed
+    //     .map((data) => TransactionModel().fromJson(data))
+    //     .toList());
+    _myTransactions.value = List.generate(transactions.length, (index) {
+      return TransactionModel().fromJson(transactions[index]);
+    });
+    // _myTransactions.value = transactionsFromDB;
+    incCounter();
     // getTotalAmountForPickedDate(transactionsFromDB);
     // tracker(transactionsFromDB);
   }
