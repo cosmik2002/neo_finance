@@ -4,11 +4,11 @@ import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
 
 class ExpenseList extends StatelessWidget {
-
   final _homeController = Get.find<HomeController>();
 
   @override
   Widget build(BuildContext context) {
+    return Obx(() {
       return Expanded(
         child: ListView.builder(
           itemCount: _homeController.myTransactions.length,
@@ -35,5 +35,6 @@ class ExpenseList extends StatelessWidget {
           },
         ),
       );
+    });
   }
 }

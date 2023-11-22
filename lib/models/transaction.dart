@@ -6,7 +6,7 @@ class TransactionModel {
   final String? operation;
   final String? from;
   final String? to;
-  final String? status;
+  String? status;
 
   TransactionModel({this.id, this.date, this.amount,this.operation, this.comment, this.from, this.to, this.status});
   @override
@@ -18,10 +18,9 @@ class TransactionModel {
           other.date == date && other.amount == amount && other.from == from && other.to == to && other.comment == comment;
 
   @override
-  // TODO: implement hashCode
   int get hashCode => Object.hash(date, amount, from, to, comment);
 
-  Map<String, dynamic> toMap() {
+    Map<String, dynamic> toMap() {
     return {
       'date': date,
       'amount': amount,

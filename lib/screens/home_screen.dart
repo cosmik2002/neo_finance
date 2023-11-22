@@ -17,7 +17,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -33,13 +32,13 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              const Text(
+/*              const Text(
               'You have pushed the button this many times:',
             ),
             Text(
                 '${_homeController.counter}',
               style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            ),*/
               ExpenseList()
             ],
           ),
@@ -56,6 +55,5 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       );
-    });
   }
 }

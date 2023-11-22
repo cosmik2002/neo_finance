@@ -16,7 +16,7 @@ class HomeController extends GetxController {
   @override
   onInit() async {
     super.onInit();
-    await GoogleSheetsIntegration().getDataFromGoogleSheets();
+    await GoogleSheetsIntegration.getDataFromGoogleSheets();
     getTransactions();
   }
   incCounter() {

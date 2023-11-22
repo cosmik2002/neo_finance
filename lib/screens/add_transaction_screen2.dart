@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:neo_finance/google_sheet_provider.dart';
 
 import '../controllers/add_transaction_controller.dart';
 import 'package:get/get.dart';
 
 import '../controllers/theme_controller.dart';
+import '../database_provider.dart';
+import '../models/transaction.dart';
 
 
 class AddTransactionScreen2 extends StatelessWidget {
@@ -38,7 +42,7 @@ class AddTransactionScreen2 extends StatelessWidget {
                         itemCount: _addTransactionController.operationsButton.length,
                         itemBuilder: (context,index){
                           return ElevatedButton(
-                            onPressed: ()=>'',
+                            onPressed: ()=>_addTransaction(_addTransactionController.operationsButton[index]),
                             child: Text(_addTransactionController.operationsButton[index]),
                           );
                         })
@@ -46,5 +50,23 @@ class AddTransactionScreen2 extends StatelessWidget {
           )
       );
     });
+  }
+
+   _addTransaction (operation) async {
+    final TransactionModel transactionModel = TransactionModel(
+      amount: double.parse(_amountController.text),
+      date: DateFormat('dd.MM.yyyy').format( DateTime.now()),
+        operation: operation,
+      from: "НЭО",
+      to: "test",
+      comment: 'comment',
+      //date: _addTransactionController.selectedDate,
+    );
+    if(await GoogleSheetsIntegration.uploadDataToGoogleSheets(transactionModel)){
+      transactionModel.status = '1';
+    }
+    await DatabaseProvider.insertTransaction(transactionModel);
+    Get.back();
+
   }
 }
