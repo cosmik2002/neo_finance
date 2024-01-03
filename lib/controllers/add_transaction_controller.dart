@@ -6,7 +6,7 @@ import '../database_provider.dart';
 
 class AddTransactionController extends GetxController {
   final Rx<String> _transactionType = ''.obs;
-  final Rx<String> _selectedDate = DateFormat.yMd().format(DateTime.now()).obs;
+  final Rx<String> _selectedDate = DateFormat("dd.MM.yyyy").format(DateTime.now()).obs;
   final Rx<String> _selectedOperation = Rx<String>('');
   final Rx<String> _selectedFrom = Rx<String>('');
   final Rx<String> _selectedTo = ''.obs;
@@ -29,6 +29,8 @@ class AddTransactionController extends GetxController {
 
   updateSelectedDate(String date) => _selectedDate.value = date;
   updateSelectedTo(String to) => _selectedTo.value = to;
+
+
 
   updateOperationsButtons() async {
     List<Map<String, dynamic>> operations =

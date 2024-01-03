@@ -18,7 +18,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
       return Scaffold(
-        appBar: AppBar(
+/*        appBar: AppBar(
           leading: IconButton(
             onPressed: () async {
               // _themeController.switchTheme();
@@ -27,7 +27,7 @@ class HomeScreen extends StatelessWidget {
             // color: _themeController.color,
           ),
           title: Text('title'),
-        ),
+        ),*/
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

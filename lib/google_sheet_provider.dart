@@ -32,92 +32,96 @@ class GoogleSheetsIntegration {
       return {};
     }
     var headers = await sheet.values.row(1);
+    try {
+      DatabaseProvider.startBatch();
 
-    DatabaseProvider.startBatch();
-
-    var operationCol = headers.indexOf(operationTypesColumnHeader);
-    if (operationCol != -1) {
-      operations = await sheet.values.column(operationCol + 1, fromRow: 2);
-      await DatabaseProvider.deleteAllOperations();
-      for(var operation in operations) {
-        await DatabaseProvider.insertOperation(OperationModel(id:null, name: operation, dt: '', kt: ''));
-      }
-    }
-    var tichersCol = headers.indexOf(teachersColumnHeader);
-    if (tichersCol != -1) {
-      teachers = await sheet.values.column(tichersCol + 1, fromRow: 2);
-      await DatabaseProvider.deleteAllTeachers();
-      for(var teacher in teachers) {
-        await DatabaseProvider.insertTeacher(TeacherModel(id:null, name: teacher));
-      }
-    }
-
-    var sheetTra = spreadsheet.worksheetByTitle(transactionSheetTitle);
-    if (sheetTra != null) {
-      var transactions = await sheetTra.values.allRows(fromRow: 2);
-      var epoch = new DateTime(1899, 12, 30);
-      var currentDate;
-      var dbContragents = await DatabaseProvider.queryContragents();
-      List<ContragentModel> contragents = [];
-      List<Map<String, dynamic>> dbTransactions = await DatabaseProvider.queryTransactions();
-
-
-
-      List<TransactionModel> transactionList = List.generate(dbTransactions.length, (index) {
-        return TransactionModel().fromJson(dbTransactions[index]);});
-      List<ContragentModel> contragentList = List.generate(dbContragents.length, (index) {
-        return ContragentModel().fromJson(dbContragents[index]);}, growable: true);
-      transactions = transactions.where((transaction) {
-        if (transaction.isEmpty || int.tryParse(transaction[0]) == null)
-          return false;
-        currentDate =
-            epoch.add(Duration(days: int.parse(transaction[0])));
-        var ctr = ContragentModel(name:transaction[3]);
-        if(!contragentList.contains(ctr)){
-          contragentList.add(ctr);
-          contragents.add(ctr);
+      var operationCol = headers.indexOf(operationTypesColumnHeader);
+      if (operationCol != -1) {
+        operations = await sheet.values.column(operationCol + 1, fromRow: 2);
+        await DatabaseProvider.deleteAllOperations();
+        for (var operation in operations) {
+          await DatabaseProvider.insertOperation(
+              OperationModel(id: null, name: operation, dt: '', kt: ''));
         }
-       return !transactionList.contains(TransactionModel(
-            date: DateFormat('dd.MM.yyyy').format(currentDate),
-            operation: transaction[1],
-            from: transaction[2],
-            to: transaction[3],
-            amount: double.parse(transaction[4]),
-            comment: transaction.length > 5 ? transaction[5] : ''));
-      }).toList();
-      for (var contragent in contragents) {
-        await DatabaseProvider.insertContragent(contragent);
       }
-      for (var transaction in transactions) {
-        try {
-          currentDate =
-          epoch.add(Duration(days: int.parse(transaction[0])));
-          await DatabaseProvider.insertTransaction(TransactionModel(
+      var tichersCol = headers.indexOf(teachersColumnHeader);
+      if (tichersCol != -1) {
+        teachers = await sheet.values.column(tichersCol + 1, fromRow: 2);
+        await DatabaseProvider.deleteAllTeachers();
+        for (var teacher in teachers) {
+          await DatabaseProvider.insertTeacher(
+              TeacherModel(id: null, name: teacher));
+        }
+      }
+
+      var sheetTra = spreadsheet.worksheetByTitle(transactionSheetTitle);
+      if (sheetTra != null) {
+        var transactions = await sheetTra.values.allRows(fromRow: 2);
+        var epoch = new DateTime(1899, 12, 30);
+        var currentDate;
+        var dbContragents = await DatabaseProvider.queryContragents();
+        List<ContragentModel> contragents = [];
+        List<Map<String, dynamic>> dbTransactions =
+            await DatabaseProvider.queryTransactions();
+
+        List<TransactionModel> transactionList =
+            List.generate(dbTransactions.length, (index) {
+          return TransactionModel().fromJson(dbTransactions[index]);
+        });
+        List<ContragentModel> contragentList =
+            List.generate(dbContragents.length, (index) {
+          return ContragentModel().fromJson(dbContragents[index]);
+        }, growable: true);
+        transactions = transactions.where((transaction) {
+          if (transaction.isEmpty || int.tryParse(transaction[0]) == null)
+            return false;
+          currentDate = epoch.add(Duration(days: int.parse(transaction[0])));
+          var ctr = ContragentModel(name: transaction[3]);
+          if (!contragentList.contains(ctr)) {
+            contragentList.add(ctr);
+            contragents.add(ctr);
+          }
+          return !transactionList.contains(TransactionModel(
               date: DateFormat('dd.MM.yyyy').format(currentDate),
               operation: transaction[1],
               from: transaction[2],
               to: transaction[3],
               amount: double.parse(transaction[4]),
               comment: transaction.length > 5 ? transaction[5] : ''));
-        } catch (e) {
-          print(e);
+        }).toList();
+        for (var contragent in contragents) {
+          await DatabaseProvider.insertContragent(contragent);
+        }
+        for (var transaction in transactions) {
+          try {
+            currentDate = epoch.add(Duration(days: int.parse(transaction[0])));
+            await DatabaseProvider.insertTransaction(TransactionModel(
+                date: DateFormat('dd.MM.yyyy').format(currentDate),
+                operation: transaction[1],
+                from: transaction[2],
+                to: transaction[3],
+                amount: double.parse(transaction[4]),
+                comment: transaction.length > 5 ? transaction[5] : ''));
+          } catch (e) {
+            print(e);
+          }
+        }
+        // var operationCol = headers.indexOf('Тип операции2');
+        if (operationCol != -1) {
+          operations = await sheet.values.column(operationCol + 1, fromRow: 2);
+          for (var operation in operations) {
+            DatabaseProvider.insertOperation(
+                OperationModel(id: null, name: operation, dt: '', kt: ''));
+          }
         }
       }
-      // var operationCol = headers.indexOf('Тип операции2');
-      if (operationCol != -1) {
-        operations = await sheet.values.column(operationCol + 1, fromRow: 2);
-        for(var operation in operations) {
-          DatabaseProvider.insertOperation(OperationModel(id:null, name: operation, dt: '', kt: ''));
-        }
-      }
+
+      DatabaseProvider.commitBatch(noResult: true);
+    } catch (e) {
+      print(e);
+      return {};
     }
-
-    DatabaseProvider.commitBatch(noResult: true);
-
-    return {
-      'operations' : operations,
-      'teachers': teachers
-    };
+    return {'operations': operations, 'teachers': teachers};
   }
 
   static Future<bool> uploadDataToGoogleSheets(TransactionModel transaction) async {
