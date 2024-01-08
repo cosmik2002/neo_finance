@@ -32,7 +32,7 @@ class InputField extends StatelessWidget {
             style: Themes().labelStyle,
           ),
           Container(
-            height: 48.h,
+            height: 24.sp,
             margin: EdgeInsets.only(
               top: 6.h,
             ),
@@ -45,7 +45,7 @@ class InputField extends StatelessWidget {
                 width: 1.w,
               ),
               borderRadius: BorderRadius.circular(
-                10.r,
+                5.r,
               ),
             ),
             child: Row(
@@ -54,7 +54,7 @@ class InputField extends StatelessWidget {
                   child: TextFormField(
                     keyboardType:
                         isAmount! ? TextInputType.number : TextInputType.text,
-                    readOnly: widget == null ? false : true,
+                    // readOnly: widget == null ? false : true,
                     autofocus: false,
                     cursorColor: Get.isDarkMode
                         ? Colors.grey.shade100

@@ -13,6 +13,7 @@ class AddTransactionController extends GetxController {
   // DateFormat('hh:mm a').format(DateTime.now()).obs;
   final Rx<String> _selectedImage = Rx<String>('');
   final Rx<List<String>> _operationsButtons = Rx<List<String>>([]);
+  final Rx<List<String>> _contragents = Rx<List<String>>([]);
 
   String get selectedDate => _selectedDate.value;
   String get selectedTo => _selectedTo.value;
@@ -22,6 +23,7 @@ class AddTransactionController extends GetxController {
 
   String get transactionType => _transactionType.value;
   List<String> get operationsButton => _operationsButtons.value;
+  List<String> get contragents => _contragents.value;
 
   changeTransactionType(String tt) => _transactionType.value = tt;
   updateSelectedOperation(String category) => _selectedOperation.value = category;
@@ -37,6 +39,14 @@ class AddTransactionController extends GetxController {
         await DatabaseProvider.queryOperations();
     _operationsButtons.value = List.generate(operations.length, (index) {
       return operations[index]['name'];
+    });
+  }
+
+  updateContragents() async {
+    List<Map<String, dynamic>> contragetns =
+    await DatabaseProvider.queryContragents();
+    _contragents.value = List.generate(contragetns.length, (index) {
+      return contragetns[index]['name'];
     });
   }
 

@@ -1,6 +1,6 @@
 class TransactionModel {
   final int? id;
-  final String? date;
+  final String date;
   final double? amount;
   final String? comment;
   final String? operation;
@@ -8,7 +8,7 @@ class TransactionModel {
   final String? to;
   String? status;
 
-  TransactionModel({this.id, this.date, this.amount,this.operation, this.comment, this.from, this.to, this.status});
+  TransactionModel({this.id, required this.date, this.amount,this.operation, this.comment, this.from, this.to, this.status});
   @override
   bool operator == (
       dynamic other
@@ -22,6 +22,7 @@ class TransactionModel {
 
     Map<String, dynamic> toMap() {
     return {
+      'id': id,
       'date': date,
       'amount': amount,
       'comment': comment,
@@ -34,6 +35,7 @@ class TransactionModel {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'date': date,
       'amount': amount,
       'comment': comment,
@@ -44,7 +46,7 @@ class TransactionModel {
     };
   }
 
-  TransactionModel fromJson(Map<String, dynamic> json) => TransactionModel(
+  factory TransactionModel.fromJson(Map<String, dynamic> json) => TransactionModel(
     id: json['id'],
     amount: json['amount'],
     date: json['date'],

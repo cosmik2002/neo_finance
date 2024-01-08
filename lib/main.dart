@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:neo_finance/screens/home_screen.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'constants/theme.dart';
@@ -20,6 +21,7 @@ void main() async{
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
+  await GetStorage.init();
   await DatabaseProvider.initDb();
 
   runApp(MyApp());

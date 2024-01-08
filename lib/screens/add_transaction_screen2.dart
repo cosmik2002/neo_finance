@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:neo_finance/google_sheet_provider.dart';
 
+import '../constants/colors.dart';
 import '../controllers/add_transaction_controller.dart';
 import 'package:get/get.dart';
 
@@ -10,19 +11,17 @@ import '../database_provider.dart';
 import '../models/transaction.dart';
 import '../widgets/input_field.dart';
 
-
 class AddTransactionScreen2 extends StatelessWidget {
   AddTransactionScreen2({Key? key}) : super(key: key);
 
   final AddTransactionController _addTransactionController =
-  Get.put(AddTransactionController());
+      Get.put(AddTransactionController());
 
   final _themeController = Get.find<ThemeController>();
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
-
-  final List<String> _transactionTypes = ['Income', 'Expense'];
+  final TextEditingController _commentController = TextEditingController();
 
   final DateTime now = DateTime.now();
 
@@ -30,28 +29,27 @@ class AddTransactionScreen2 extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       return Scaffold(
+          appBar: _appBar(),
           body: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(children: [
-                Expanded(
-                  child: InputField(
-                    hint: _addTransactionController.selectedDate.isNotEmpty
-                        ? _addTransactionController.selectedDate
-                        : DateFormat("dd.MM.yyyy").format(now),
-                    label: 'Date',
-                    widget: IconButton(
-                      onPressed: () => _getDateFromUser(context),
-                      icon: Icon(
-                        Icons.calendar_month_outlined,
-                        color: Colors.grey,
-                      ),
+                InputField(
+                  hint: _addTransactionController.selectedDate.isNotEmpty
+                      ? _addTransactionController.selectedDate
+                      : DateFormat("dd.MM.yyyy").format(now),
+                  label: 'Date',
+                  widget: IconButton(
+                    onPressed: () => _getDateFromUser(context),
+                    icon: Icon(
+                      Icons.calendar_month_outlined,
+                      color: Colors.grey,
                     ),
                   ),
                 ),
-                TextFormField(
+                InputField(
+                  hint: '0',
                   controller: _amountController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Amount'),
+                  label: 'Amount',
                 ),
                 InputField(
                   hint: _addTransactionController.selectedOperation.isNotEmpty
@@ -59,41 +57,63 @@ class AddTransactionScreen2 extends StatelessWidget {
                       : _addTransactionController.operationsButton[0],
                   label: 'Category',
                   widget: IconButton(
-                      onPressed: () => _showDialog(context, true),
+                      onPressed: () => _showDialog(context, 0),
                       icon: Icon(
                         Icons.keyboard_arrow_down_sharp,
                       )),
                 ),
-                Expanded(
-                    child: ListView.builder(
-                        itemCount: _addTransactionController.operationsButton.length,
-                        itemBuilder: (context,index){
-                          return ElevatedButton(
-                            onPressed: ()=>_addTransaction(_addTransactionController.operationsButton[index]),
-                            child: Text(_addTransactionController.operationsButton[index]),
-                          );
-                        })
-                )        ])
-          )
+                InputField(
+                  hint: _addTransactionController.selectedFrom,
+                  label: 'От кого',
+                  widget: IconButton(
+                      onPressed: () => _showDialog(context, 1),
+                      icon: Icon(
+                        Icons.keyboard_arrow_down_sharp,
+                      )),
+                ),
+          InputField(
+            hint: _addTransactionController.selectedTo,
+            label: 'Кому',
+            widget: IconButton(
+                onPressed: () => _showDialog(context, 2),
+                icon: Icon(
+                  Icons.keyboard_arrow_down_sharp,
+                )),
+          ),
+                InputField(hint: '', label: 'Комментарий', controller: _commentController,)
+          ])),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: primaryColor,
+          onPressed: () => _addTransaction(),
+          child: Icon(
+            Icons.add,
+          ),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       );
     });
   }
 
-  _showDialog(BuildContext context, bool isCategories) {
+  _showDialog(BuildContext context, int type) {
     Get.defaultDialog(
       title: "Кому",
       content: SizedBox(
         width: MediaQuery.of(context).size.width * .7,
         height: MediaQuery.of(context).size.height * .4,
         child: ListView.builder(
-          itemCount: isCategories ? _addTransactionController.operationsButton.length : [].length,
+          itemCount: type==0
+              ? _addTransactionController.operationsButton.length
+              : _addTransactionController.contragents.length,
           itemBuilder: (context, i) {
-            final data = isCategories ? _addTransactionController.operationsButton[i] : '';
+            final data = type == 0
+                ? _addTransactionController.operationsButton[i]
+                : _addTransactionController.contragents[i];
             return ListTile(
               onTap: () {
-                isCategories
+                type == 0
                     ? _addTransactionController.updateSelectedOperation(data)
-                    : _addTransactionController.updateSelectedFrom(data);
+                    : (type==1 ? _addTransactionController.updateSelectedFrom(data)
+                    : _addTransactionController.updateSelectedTo(data));
                 Get.back();
               },
               title: Text(data),
@@ -117,21 +137,36 @@ class AddTransactionScreen2 extends StatelessWidget {
     }
   }
 
-   _addTransaction (operation) async {
+  _addTransaction() async {
     final TransactionModel transactionModel = TransactionModel(
-      amount: double.parse(_amountController.text),
-      date: DateFormat('dd.MM.yyyy').format( DateTime.now()),
-        operation: operation,
-      from: "НЭО",
-      to: "test",
-      comment: 'comment',
+      amount: double.tryParse(_amountController.text),
+      date: _addTransactionController.selectedDate,
+      operation: !_addTransactionController.selectedOperation.isEmpty ?
+      _addTransactionController.selectedOperation :
+      _addTransactionController.operationsButton[0],
+      from: _addTransactionController.selectedFrom,
+      to: _addTransactionController.selectedTo,
+      comment: _commentController.text,
       //date: _addTransactionController.selectedDate,
     );
-    if(await GoogleSheetsIntegration.uploadDataToGoogleSheets(transactionModel)){
+    if (await GoogleSheetsIntegration.addTransactionToGoogleSheets(
+        transactionModel)) {
       transactionModel.status = '1';
     }
     await DatabaseProvider.insertTransaction(transactionModel);
     Get.back();
+  }
 
+  _appBar() {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      title: Text(
+        'Добавить операцию',
+        style: TextStyle(color: _themeController.color),
+      ),
+      leading: IconButton(
+          onPressed: () => Get.back(),
+          icon: Icon(Icons.arrow_back, color: _themeController.color)),
+    );
   }
 }

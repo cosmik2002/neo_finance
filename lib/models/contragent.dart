@@ -1,33 +1,35 @@
 class ContragentModel {
-  final int? id;
-  final String? name;
+  int? id;
+  final String name;
+  int is_from;
+  int is_to;
 
-  ContragentModel({this.id, this.name});
+  ContragentModel(
+      {this.id,
+      required this.name,
+      required this.is_from,
+      required this.is_to});
 
   Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-    };
+    return {'name': name, 'is_from': is_from, 'is_to': is_to};
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-    };
+    return {'name': name, 'is_from': is_from, 'is_to': is_to};
   }
 
-  ContragentModel fromJson(Map<String, dynamic> json) => ContragentModel(
-      id: json['id'],
-      name: json['name'],
-   );
+  factory ContragentModel.fromJson(Map<String, dynamic> json) =>
+      ContragentModel(
+          id: json['id'],
+          name: json['name'],
+          is_from: json['is_from'],
+          is_to: json['is_to']);
 
   @override
-  bool operator == (
-      dynamic other
-      )=>
+  bool operator == (dynamic other) =>
       other is ContragentModel &&
-          other.runtimeType == runtimeType &&
-          other.name == name;
+      other.runtimeType == runtimeType &&
+      other.name == name;
 
   @override
   int get hashCode => name.hashCode;
