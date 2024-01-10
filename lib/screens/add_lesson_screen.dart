@@ -110,7 +110,7 @@ class AddLessonScreen extends StatelessWidget {
                     ? _addLessonController.updateSelectedTeacher(data)
                     : _addLessonController.updateSelectedName(data);
                 if(isTeachers){
-                  _amountController.text = (1000*i).toString();
+                  // _amountController.text = (1000*i).toString();
                 }
                 Get.back();
               },

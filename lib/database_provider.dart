@@ -244,7 +244,7 @@ class DatabaseProvider {
     return deleteTable(_transactionsTableName, where: 'id=?', whereArgs: [id]);
   }
 
-  static Future<int> deleteLesson(String id) async {
+  static Future<int> deleteLesson(int id) async {
     return deleteTable(_lessonsTableName, where: 'id=?', whereArgs: [id]);
   }
 
@@ -268,7 +268,7 @@ class DatabaseProvider {
   }
 
   static Future<List<Map<String, dynamic>>> queryLessons() async {
-    return queryTable(_lessonsTableName);
+    return queryTable(_lessonsTableName, orderBy: "(substr(date,7,4) || substr(date,4,2)||substr(date,1,2))");
   }
 
   static Future<List<Map<String, dynamic>>> queryLessonNames() async {

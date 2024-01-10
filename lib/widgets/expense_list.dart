@@ -19,13 +19,8 @@ class ExpenseList extends StatelessWidget {
         separatorBuilder: (c, i) => const Divider(height: 0),
         itemBuilder: (context, i) {
           int idx = _homeController.myTransactions.length - i - 1;
-          //делаем копию, чтобы перерисовать
           final transaction = _homeController.myTransactions[idx];
           final statusEmpty = transaction.status?.isEmpty ?? true;
-          // final bool isIncome = transaction.type == 'Income' ? true : false;
-          final text =
-              '${transaction.date} ${transaction.operation} ${transaction.from} ${transaction.to} ${transaction.amount}';
-          // final formatAmount = '- $text';
           return ListTile(
             title: Row(children: [
               Container(
@@ -34,33 +29,41 @@ class ExpenseList extends StatelessWidget {
                   child: Text(
                       overflow: TextOverflow.ellipsis,
                       '${transaction.operation}')),
-              // Text('${transaction.from}'),
               const Padding(padding: EdgeInsets.symmetric(horizontal: 5.0)),
               Container(width: 50.w, child: Text('${transaction.amount}')),
             ]),
-            subtitle:Column( children:[ Row(
-              children: [
-                Text('${transaction.date}'),
-                const Padding(padding: EdgeInsets.symmetric(horizontal: 5.0)),
-                Container(width: 150.w, child: Text(/*transaction.type == 0 ? '${transaction.to}' :*/ '${transaction.from}')),
-              ]),
-              Text('${transaction.comment}', textAlign: TextAlign.left,),
-            ],
+            subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Text(transaction.date),
+                  const Padding(padding: EdgeInsets.symmetric(horizontal: 5.0)),
+                  Container(
+                      width: 150.w,
+                      child: Text(transaction.type == 0
+                          ? '${transaction.to}'
+                          : '${transaction.from}')
+                  ),
+                ]),
+                Text(
+                  '${transaction.comment}',
+                  textAlign: TextAlign.left,
+                ),
+              ],
             ),
             isThreeLine: true,
             dense: true,
-              minLeadingWidth: 30,
-              horizontalTitleGap: 0,
-            leading: transaction.status?.isEmpty ?? true
-            ? Icon(
-                Icons.cancel,
-                color: Colors.red,
-              )
-            : Icon(
-                Icons.check_circle,
-                color: Colors.green,
-              ),
+            minLeadingWidth: 30,
+            horizontalTitleGap: 0,
+            leading: statusEmpty
+                ? const Icon(
+                    Icons.cancel,
+                    color: Colors.red,
+                  )
+                : const Icon(
+                    Icons.check_circle,
+                    color: Colors.green,
+                  ),
             trailing: PopupMenuButton<int>(
               onSelected: (int? value) {
                 if (value == 2) {
@@ -95,21 +98,7 @@ class ExpenseList extends StatelessWidget {
                 return items;
               },
             ),
-            //tileColor: transaction.status?.isEmpty ?? true ? Colors.pink[100]! : null
           );
-/*        return transaction.date ==
-            DateFormat.yMd().format(_homeController.selectedDate)
-            ? GestureDetector(
-          onTap: () async {
-            await Get.to(() => EditTransactionScreen(tm: transaction));
-            _homeController.getTransactions();
-          },
-          child: TransactionTile(
-              transaction: transaction,
-              formatAmount: formatAmount,
-              isIncome: isIncome),
-        )
-            : SizedBox();*/
         },
       );
     });

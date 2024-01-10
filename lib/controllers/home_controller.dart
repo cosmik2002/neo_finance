@@ -39,6 +39,20 @@ class HomeController extends GetxController {
     _myTransactions.refresh();
   }
 
+  updateLesson(int idx, LessonModel m) {
+    _lessons.value[idx] = m;
+    DatabaseProvider.updateLesson(m, m.id!);
+    _lessons.refresh();
+  }
+
+  deleteLesson(int idx) {
+    if(_lessons.value[idx].id != null) {
+      DatabaseProvider.deleteLesson(_lessons.value[idx].id!);
+    }
+    _lessons.value.removeAt(idx);
+    _lessons.refresh();
+  }
+
   getTransactions() async {
     List<Map<String, dynamic>> transactions =
     await DatabaseProvider.queryTransactions();
