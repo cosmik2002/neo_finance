@@ -3,14 +3,16 @@ class OperationModel {
   final String? name;
   final String? dt;
   final String? kt;
+  int type;
 
-  OperationModel({this.id, this.name, this.dt, this.kt});
+  OperationModel({this.id, this.name, this.dt, this.kt, required this.type});
 
   Map<String, dynamic> toMap() {
     return {
       'name': name,
       'dt': dt,
       'kt': kt,
+      'type': type
     };
   }
 
@@ -19,6 +21,7 @@ class OperationModel {
       'name': name,
       'dt': dt,
       'kt': kt,
+      'type': type
     };
   }
 
@@ -27,6 +30,7 @@ class OperationModel {
       name: json['name'],
       dt: json['dt'],
       kt: json['kt'],
+      type: json['type']
    );
 
 }

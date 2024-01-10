@@ -15,7 +15,7 @@ import 'models/teachers.dart';
 
 class DatabaseProvider {
   static Database? _db;
-  static const int _version = 3;
+  static const int _version = 4;
   static const String _transactionsTableName = 'transactions';
   static const String _lessonsTableName = 'lessons';
   static const String _lessonNamesTableName = 'lesson_names';
@@ -68,16 +68,23 @@ class DatabaseProvider {
       case 3:
         await _databaseVersion3(db);
         break;
-/*      case 4:
+      case 4:
         await _databaseVersion4(db);
         break;
-      case 5:
+/*      case 5:
         await _databaseVersion5(db);
         break;
 */
     }
   }
   static _databaseVersion4(Database db) {
+    var sql = "ALTER TABLE $_contragentsTableName ADD COLUMN type int not null default 0";
+    db.execute(sql);
+    sql = "ALTER TABLE $_operationsTableName ADD COLUMN type int not null default 0";
+    db.execute(sql);
+    sql = "ALTER TABLE $_transactionsTableName ADD COLUMN type int not null default 0";
+    db.execute(sql);
+
   }
 
   static _databaseVersion3(Database db) {
@@ -128,8 +135,13 @@ class DatabaseProvider {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> queryTable(String table) async {
-    return await _db!.query(table);
+  static Future<List<Map<String, dynamic>>> queryTable(String table, {String orderBy = ''}) async {
+
+    return await _db!.query(table, orderBy: orderBy != '' ? orderBy : 'id desc');
+  }
+
+  Map<Symbol, dynamic> symbolizeKeys(Map<String, dynamic> map){
+    return map.map((k, v) => MapEntry(Symbol(k), v));
   }
 
   static Future<int> insertTable(
@@ -139,6 +151,11 @@ class DatabaseProvider {
       return 0;
     }
     return await _db!.insert(table, data);
+  }
+
+  static Future<int?> getInsrtedId() async {
+    return Sqflite
+        .firstIntValue(await _db!.rawQuery('SELECT last_insert_rowid()'));
   }
 
   static Future<int> updateTable(String table, Map<String, dynamic> data,
@@ -247,7 +264,7 @@ class DatabaseProvider {
   }
 
   static Future<List<Map<String, dynamic>>> queryTransactions() async {
-    return queryTable(_transactionsTableName);
+    return queryTable(_transactionsTableName, orderBy: "(substr(date,7,4) || substr(date,4,2)||substr(date,1,2))");
   }
 
   static Future<List<Map<String, dynamic>>> queryLessons() async {

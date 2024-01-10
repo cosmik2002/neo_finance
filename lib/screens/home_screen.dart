@@ -3,12 +3,12 @@ import 'package:get/get.dart';
 import 'package:neo_finance/controllers/add_lesson_controller.dart';
 import 'package:neo_finance/screens/add_lesson_screen.dart';
 import 'package:neo_finance/widgets/lessons_list.dart';
+import 'package:neo_finance/widgets/settings_tab.dart';
 import '../constants/colors.dart';
 import '../controllers/add_transaction_controller.dart';
 import '../controllers/home_controller.dart';
 import '../controllers/theme_controller.dart';
 import '../widgets/expense_list.dart';
-import 'add_transaction_screen.dart';
 import 'add_transaction_screen2.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -52,7 +52,7 @@ class HomeScreen extends StatelessWidget {
             body: TabBarView(children: [
               Center(child: ExpenseList()),
               Center(child: LessonsList()),
-              Center(child: Text("bike"))
+              Center(child: SettingsTab())
             ]),
             floatingActionButton: _bottomButtons(_homeController.tabIndex),
           );
@@ -69,7 +69,7 @@ class HomeScreen extends StatelessWidget {
               await _addTransactionController.updateOperationsButtons();
               await _addTransactionController.updateContragents();
               await Get.to(() => AddTransactionScreen2());
-              _homeController.getTransactions();
+              // _homeController.getTransactions();
             },
             child: const Icon(
               Icons.add,

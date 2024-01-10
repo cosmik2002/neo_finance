@@ -9,13 +9,14 @@ class InputField extends StatelessWidget {
   final bool? isAmount;
   final TextEditingController? controller;
   final Widget? widget;
+  final bool focus;
   InputField({
     Key? key,
     required this.hint,
     required this.label,
     this.isAmount = false,
     this.controller,
-    this.widget,
+    this.widget,this.focus = false
   }) : super(key: key);
 
   @override
@@ -32,7 +33,7 @@ class InputField extends StatelessWidget {
             style: Themes().labelStyle,
           ),
           Container(
-            height: 24.sp,
+            height: 48.h, //24.sp,
             margin: EdgeInsets.only(
               top: 6.h,
             ),
@@ -55,7 +56,7 @@ class InputField extends StatelessWidget {
                     keyboardType:
                         isAmount! ? TextInputType.number : TextInputType.text,
                     // readOnly: widget == null ? false : true,
-                    autofocus: false,
+                    autofocus: focus,
                     cursorColor: Get.isDarkMode
                         ? Colors.grey.shade100
                         : Colors.grey.shade700,

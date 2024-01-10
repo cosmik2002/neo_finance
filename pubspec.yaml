@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   get:
+  http:
   flutter_screenutil:
   get_storage:
   sqflite_common_ffi: '>=2.2.2-1'

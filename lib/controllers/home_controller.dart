@@ -54,4 +54,19 @@ class HomeController extends GetxController {
       return LessonModel().fromJson(lessonsLc[index]);
     });
   }
+
+  clearBase() async {
+    await DatabaseProvider.deleteAllTransactions();
+    await DatabaseProvider.deleteAllLessons();
+    getTransactions();
+    getLessons();
+
+    // await DatabaseProvider.deleteAllContragents();
+  }
+
+  updateBase() async {
+    await GoogleSheetsIntegration.getDataFromGoogleSheets();
+    getTransactions();
+    getLessons();
+  }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:neo_finance/controllers/home_controller.dart';
 import 'package:neo_finance/google_sheet_provider.dart';
 
 import '../constants/colors.dart';
@@ -16,6 +18,7 @@ class AddTransactionScreen2 extends StatelessWidget {
 
   final AddTransactionController _addTransactionController =
       Get.put(AddTransactionController());
+  final HomeController _homeController = Get.put(HomeController());
 
   final _themeController = Get.find<ThemeController>();
 
@@ -30,8 +33,8 @@ class AddTransactionScreen2 extends StatelessWidget {
     return Obx(() {
       return Scaffold(
           appBar: _appBar(),
-          body: Padding(
-              padding: const EdgeInsets.all(16.0),
+          body: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
               child: Column(children: [
                 InputField(
                   hint: _addTransactionController.selectedDate.isNotEmpty
@@ -47,7 +50,8 @@ class AddTransactionScreen2 extends StatelessWidget {
                   ),
                 ),
                 InputField(
-                  hint: '0',
+                  hint: '',
+                  focus: true,
                   controller: _amountController,
                   label: 'Amount',
                 ),
@@ -147,13 +151,18 @@ class AddTransactionScreen2 extends StatelessWidget {
       from: _addTransactionController.selectedFrom,
       to: _addTransactionController.selectedTo,
       comment: _commentController.text,
-      //date: _addTransactionController.selectedDate,
+      type: 0
     );
-    if (await GoogleSheetsIntegration.addTransactionToGoogleSheets(
-        transactionModel)) {
-      transactionModel.status = '1';
-    }
     await DatabaseProvider.insertTransaction(transactionModel);
+    var id = await DatabaseProvider.getInsrtedId();
+    transactionModel.id = id;
+    _homeController.myTransactions.add(transactionModel);
+    int idx = _homeController.myTransactions.length-1;
+    GoogleSheetsIntegration.addTransactionToGoogleSheets(
+        transactionModel).then((value) {
+      transactionModel.status = '1';
+      _homeController.updateTransaction(idx, transactionModel);
+    });
     Get.back();
   }
 

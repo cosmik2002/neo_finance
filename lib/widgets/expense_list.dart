@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:neo_finance/database_provider.dart';
 import 'package:neo_finance/models/transaction.dart';
@@ -27,34 +28,49 @@ class ExpenseList extends StatelessWidget {
           // final formatAmount = '- $text';
           return ListTile(
             title: Row(children: [
-              Text('${transaction.operation}'),
-              const Padding(padding: EdgeInsets.symmetric(horizontal: 5.0)),
+              Container(
+                  // color: Colors.lightBlueAccent,
+                  width: 190.w,
+                  child: Text(
+                      overflow: TextOverflow.ellipsis,
+                      '${transaction.operation}')),
               // Text('${transaction.from}'),
-              // const Padding(padding: EdgeInsets.symmetric(horizontal: 5.0)),
-              // Text('${transaction.to}'),
-              // const Padding(padding: EdgeInsets.symmetric(horizontal: 5.0)),
-              Text('${transaction.amount}'),
+              const Padding(padding: EdgeInsets.symmetric(horizontal: 5.0)),
+              Container(width: 50.w, child: Text('${transaction.amount}')),
             ]),
-            subtitle: Text('${transaction.date} ${transaction.comment}'),
-
+            subtitle:Column( children:[ Row(
+              children: [
+                Text('${transaction.date}'),
+                const Padding(padding: EdgeInsets.symmetric(horizontal: 5.0)),
+                Container(width: 150.w, child: Text(/*transaction.type == 0 ? '${transaction.to}' :*/ '${transaction.from}')),
+              ]),
+              Text('${transaction.comment}', textAlign: TextAlign.left,),
+            ],
+              crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+            isThreeLine: true,
+            dense: true,
+              minLeadingWidth: 30,
+              horizontalTitleGap: 0,
             leading: transaction.status?.isEmpty ?? true
-                ? Icon(
-                    Icons.cancel,
-                    color: Colors.red,
-                  )
-                : Icon(
-                    Icons.check_circle,
-                    color: Colors.green,
-                  ),
+            ? Icon(
+                Icons.cancel,
+                color: Colors.red,
+              )
+            : Icon(
+                Icons.check_circle,
+                color: Colors.green,
+              ),
             trailing: PopupMenuButton<int>(
               onSelected: (int? value) {
-                if(value == 2) {
+                if (value == 2) {
                   _homeController.deleteTransaction(idx);
                 }
-                if(value == 1) {
+                if (value == 1) {
                   GoogleSheetsIntegration.addTransactionToGoogleSheets(
-                  transaction).then((value) {
-                    if(value) {
+                          transaction)
+                      .then((value) {
+                    if (value) {
                       transaction.status = '1';
                       _homeController.updateTransaction(idx, transaction);
                     }
@@ -69,10 +85,12 @@ class ExpenseList extends StatelessWidget {
                   ),
                 ];
                 if (statusEmpty) {
-                  items.insert(1, const PopupMenuItem<int>(
-                    value: 1,
-                    child: Text('Синхронизировать'),
-                  ));
+                  items.insert(
+                      1,
+                      const PopupMenuItem<int>(
+                        value: 1,
+                        child: Text('Синхронизировать'),
+                      ));
                 }
                 return items;
               },

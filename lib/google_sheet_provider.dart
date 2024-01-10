@@ -38,7 +38,7 @@ class GoogleSheetsIntegration {
      await DatabaseProvider.deleteAllOperations();
      for (var operation in operations) {
        await DatabaseProvider.insertOperation(
-           OperationModel(id: null, name: operation, dt: '', kt: ''));
+           OperationModel(id: null, name: operation, dt: '', kt: '', type: 0));
      }
    }
  }
@@ -139,8 +139,8 @@ class GoogleSheetsIntegration {
         }
         currentDate = epoch.add(Duration(days: int.parse(transaction[0])));
 
-        var ctr_to = ContragentModel(name: transaction[3], is_from:0, is_to: 1);
-        var ctr_from = ContragentModel(name: transaction[2], is_from:1, is_to: 0);
+        var ctr_to = ContragentModel(name: transaction[3].trim(), is_from:0, is_to: 1, type:0);
+        var ctr_from = ContragentModel(name: transaction[2].trim(), is_from:1, is_to: 0, type: 0);
         var i = contragentsFromGS.indexOf(ctr_to);
         if (i != -1) {
           contragentsFromGS[i].is_to = 1;
@@ -156,11 +156,12 @@ class GoogleSheetsIntegration {
 
         transactionsFromGS.add(TransactionModel(
             date: DateFormat('dd.MM.yyyy').format(currentDate),
-            operation: transaction[1],
-            from: transaction[2],
-            to: transaction[3],
+            operation: transaction[1].trim(),
+            from: transaction[2].trim(),
+            to: transaction[3].trim(),
             amount: double.tryParse(transaction[4]),
-            comment: transaction.length > 5 ? transaction[5] : ''));
+            comment: transaction.length > 5 ? transaction[5].trim() : '',
+            type: 0));
       }
     }
     return (transactionsFromGS, contragentsFromGS);

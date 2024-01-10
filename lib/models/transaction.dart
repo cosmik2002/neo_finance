@@ -1,5 +1,5 @@
 class TransactionModel {
-  final int? id;
+  int? id;
   final String date;
   final double? amount;
   final String? comment;
@@ -7,18 +7,19 @@ class TransactionModel {
   final String? from;
   final String? to;
   String? status;
+  int type;
 
-  TransactionModel({this.id, required this.date, this.amount,this.operation, this.comment, this.from, this.to, this.status});
+  TransactionModel({this.id, required this.date, this.amount,this.operation, this.comment, this.from, this.to, this.status, required this.type});
   @override
   bool operator == (
       dynamic other
       )=>
       other is TransactionModel &&
           other.runtimeType == runtimeType &&
-          other.date == date && other.amount == amount && other.from == from && other.to == to && other.comment == comment;
+          other.date == date && other.operation == operation && other.amount == amount && other.from == from && other.to == to && other.comment == comment;
 
   @override
-  int get hashCode => Object.hash(date, amount, from, to, comment);
+  int get hashCode => Object.hash(date, operation, amount, from, to, comment);
 
     Map<String, dynamic> toMap() {
     return {
@@ -29,7 +30,8 @@ class TransactionModel {
       'operation': operation,
       'from': from,
       'to': to,
-      'status':status
+      'status':status,
+      'type': type
     };
   }
 
@@ -42,7 +44,8 @@ class TransactionModel {
       'operation': operation,
       'from': from,
       'to': to,
-      'status':status
+      'status':status,
+      'type': type
     };
   }
 
@@ -54,7 +57,8 @@ class TransactionModel {
     operation: json['operation'],
     from: json['from'],
     to: json['to'],
-    status: json['status']
+    status: json['status'],
+    type: json['type']
   );
 
 
