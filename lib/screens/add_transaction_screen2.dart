@@ -22,15 +22,34 @@ class AddTransactionScreen2 extends StatelessWidget {
 
   final _themeController = Get.find<ThemeController>();
 
-  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _operationController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _commentController = TextEditingController();
+  final TextEditingController _fromController = TextEditingController();
+  final TextEditingController _toController = TextEditingController();
 
   final DateTime now = DateTime.now();
-
+  dynamic operField;
   @override
   Widget build(BuildContext context) {
+    operField = InputField(
+      hint:'',
+      label: 'Category',
+      controller: _operationController,
+      widget: IconButton(
+          onPressed: () => _showDialog(context, 0),
+          icon: Icon(
+            Icons.keyboard_arrow_down_sharp,
+          )),
+    );
     return Obx(() {
+/*      _operationController.text = _addTransactionController.selectedOperation.isNotEmpty
+          ? _addTransactionController.selectedOperation
+          : '';
+      _fromController.text = _addTransactionController.selectedFrom.isNotEmpty
+          ? _addTransactionController.selectedFrom :'';
+      _toController.text = _addTransactionController.selectedTo.isNotEmpty
+          ? _addTransactionController.selectedTo :'';*/
       return Scaffold(
           appBar: _appBar(),
           body: SingleChildScrollView(
@@ -55,19 +74,10 @@ class AddTransactionScreen2 extends StatelessWidget {
                   controller: _amountController,
                   label: 'Amount',
                 ),
+                operField,
                 InputField(
-                  hint: _addTransactionController.selectedOperation.isNotEmpty
-                      ? _addTransactionController.selectedOperation
-                      : _addTransactionController.operationsButton[0],
-                  label: 'Category',
-                  widget: IconButton(
-                      onPressed: () => _showDialog(context, 0),
-                      icon: Icon(
-                        Icons.keyboard_arrow_down_sharp,
-                      )),
-                ),
-                InputField(
-                  hint: _addTransactionController.selectedFrom,
+                  hint: '',
+                  controller: _fromController,
                   label: 'От кого',
                   widget: IconButton(
                       onPressed: () => _showDialog(context, 1),
@@ -76,7 +86,8 @@ class AddTransactionScreen2 extends StatelessWidget {
                       )),
                 ),
           InputField(
-            hint: _addTransactionController.selectedTo,
+            hint: '',
+            controller: _toController,
             label: 'Кому',
             widget: IconButton(
                 onPressed: () => _showDialog(context, 2),
@@ -114,10 +125,17 @@ class AddTransactionScreen2 extends StatelessWidget {
                 : _addTransactionController.contragents[i];
             return ListTile(
               onTap: () {
-                type == 0
-                    ? _addTransactionController.updateSelectedOperation(data)
-                    : (type==1 ? _addTransactionController.updateSelectedFrom(data)
-                    : _addTransactionController.updateSelectedTo(data));
+                switch (type) {
+                  case 0:
+                    _operationController.text = data;
+                    break;
+                  case 1:
+                    _fromController.text = data;
+                    break;
+                  case 2:
+                    _toController.text = data;
+                    break;
+                }
                 Get.back();
               },
               title: Text(data),
@@ -142,14 +160,13 @@ class AddTransactionScreen2 extends StatelessWidget {
   }
 
   _addTransaction() async {
+    print(_operationController.text);
     final TransactionModel transactionModel = TransactionModel(
       amount: double.tryParse(_amountController.text),
       date: _addTransactionController.selectedDate,
-      operation: !_addTransactionController.selectedOperation.isEmpty ?
-      _addTransactionController.selectedOperation :
-      _addTransactionController.operationsButton[0],
-      from: _addTransactionController.selectedFrom,
-      to: _addTransactionController.selectedTo,
+      operation: _operationController.text,
+      from: _fromController.text,
+      to: _toController.text,
       comment: _commentController.text,
       type: 0
     );
