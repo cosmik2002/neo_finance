@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:neo_finance/controllers/add_lesson_controller.dart';
 import 'package:neo_finance/screens/add_lesson_screen.dart';
@@ -31,6 +32,7 @@ class HomeScreen extends StatelessWidget {
         });
         return Obx(() {
           return Scaffold(
+            appBar: _appBar(context),
               bottomNavigationBar: const TabBar(
                 tabs: [
                   Tab(icon: Icon(Icons.money)),
@@ -59,6 +61,41 @@ class HomeScreen extends StatelessWidget {
         });
       }),
     );
+  }
+  _appBar(context){
+   return AppBar(
+       systemOverlayStyle: SystemUiOverlayStyle.dark,
+     title: const Text('NEO Finance'),
+     actions: <Widget>[
+       IconButton(
+         icon: const Icon(Icons.add_alert),
+         tooltip: 'Show Snackbar',
+         onPressed: () {
+           ScaffoldMessenger.of(context).showSnackBar(
+               const SnackBar(content: Text('This is a snackbar')));
+         },
+       ),
+       IconButton(
+         icon: const Icon(Icons.navigate_next),
+         tooltip: 'Go to the next page',
+         onPressed: () {
+           Get.to(()=>
+               Scaffold(
+                 appBar: AppBar(
+                   title: const Text('Next page'),
+                 ),
+                 body: const Center(
+                   child: Text(
+                     'This is the next page',
+                     style: TextStyle(fontSize: 24),
+                   ),
+                 ),
+               )
+           );
+         },
+       ),
+     ],
+   );
   }
 
   Widget _bottomButtons(idx) {

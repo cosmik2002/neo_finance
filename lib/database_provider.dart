@@ -15,7 +15,7 @@ import 'models/teachers.dart';
 
 class DatabaseProvider {
   static Database? _db;
-  static const int _version = 4;
+  static const int _version = 5;
   static const String _transactionsTableName = 'transactions';
   static const String _lessonsTableName = 'lessons';
   static const String _lessonNamesTableName = 'lesson_names';
@@ -71,12 +71,19 @@ class DatabaseProvider {
       case 4:
         await _databaseVersion4(db);
         break;
-/*      case 5:
+      case 5:
         await _databaseVersion5(db);
         break;
-*/
     }
   }
+
+  static _databaseVersion5(Database db) {
+    var sql = "ALTER TABLE $_lessonsTableName ADD COLUMN row_number int";
+    db.execute(sql);
+    sql = "ALTER TABLE $_transactionsTableName ADD COLUMN row_number int";
+    db.execute(sql);
+  }
+
   static _databaseVersion4(Database db) {
     var sql = "ALTER TABLE $_contragentsTableName ADD COLUMN type int not null default 0";
     db.execute(sql);
@@ -84,7 +91,6 @@ class DatabaseProvider {
     db.execute(sql);
     sql = "ALTER TABLE $_transactionsTableName ADD COLUMN type int not null default 0";
     db.execute(sql);
-
   }
 
   static _databaseVersion3(Database db) {

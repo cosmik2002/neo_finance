@@ -5,14 +5,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class InputField extends StatelessWidget {
   final String label;
-  final String hint;
+  final String? hint;
   final bool? isAmount;
   final TextEditingController? controller;
   final Widget? widget;
   final bool focus;
   InputField({
     Key? key,
-    required this.hint,
+    this.hint,
     required this.label,
     this.isAmount = false,
     this.controller,

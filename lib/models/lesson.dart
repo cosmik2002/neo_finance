@@ -1,5 +1,5 @@
 class LessonModel {
-  final int? id;
+  int? id;
   final String? date;
   final double? amount;
   final String? comment;
@@ -7,12 +7,13 @@ class LessonModel {
   final String? teacher;
   final String? student;
   final int? hours;
+  int? row_number;
   String? type;
   String? status;
   static const TYPE_TEACHER = '1';
   static const TYPE_STUDENT = '2';
 
-  LessonModel({this.id, this.date, this.amount,this.name, this.comment, this.teacher, this.student, this.hours, this.type, this.status});
+  LessonModel({this.id, this.date, this.amount,this.name, this.comment, this.teacher, this.student, this.hours, this.type, this.status, this.row_number});
   @override
   bool operator == (
       dynamic other
@@ -37,7 +38,8 @@ class LessonModel {
       'student': student,
       'hours': hours,
       'type':type,
-      'status': status
+      'status': status,
+      'row_number': row_number
     };
   }
 
@@ -51,11 +53,12 @@ class LessonModel {
       'student': student,
       'hours': hours,
       'type':type,
-      'status': status
+      'status': status,
+      'row_number': row_number
     };
   }
 
-  LessonModel fromJson(Map<String, dynamic> json) => LessonModel(
+  factory LessonModel.fromJson(Map<String, dynamic> json) => LessonModel(
       id: json['id'],
       amount: json['amount'],
       date: json['date'],
@@ -65,6 +68,7 @@ class LessonModel {
       student: json['student'],
       hours: json['hours'],
       type: json['type'],
-      status: json['status']
+      status: json['status'],
+      row_number: json['row_number']
   );
 }

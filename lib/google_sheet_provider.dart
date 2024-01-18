@@ -9,6 +9,7 @@ import 'package:neo_finance/models/operation.dart';
 import 'package:neo_finance/models/teachers.dart';
 import 'package:neo_finance/models/transaction.dart';
 import 'package:intl/intl.dart';
+
 // import 'package:sqflite/sqflite.dart' as sqlite;
 import 'package:neo_finance/database_provider.dart';
 import 'package:neo_finance/keys.dart';
@@ -24,36 +25,41 @@ class GoogleSheetsIntegration {
   static var operationTypesColumnHeader = 'Тип операции2';
   static var teachersColumnHeader = 'Учителя';
   static var lessonNamesColumnHeader = 'Предметы';
-  static var transactionSheetTitle = 'Школа 23/24';
-  static var lessonSheetTitle = 'Учительская';
+  static var transactionSheetTitleRelease = 'Школа 23/24';
+  static var lessonSheetTitleRelease = 'Учительская';
+  static var transactionSheetTitleDebug = 'Школа 23/24 тест';
+  static var lessonSheetTitleDebug = 'Учительская тест';
+  static var transactionSheetTitle =
+      kReleaseMode ? transactionSheetTitleRelease : transactionSheetTitleDebug;
+  static var lessonSheetTitle =
+      kReleaseMode ? lessonSheetTitleRelease : lessonSheetTitleDebug;
 
   // static final AddTransactionController _addTransactionController =
   // Get.put(AddTransactionController());
 
+  static getOperations(sheet, headers) async {
+    var operationCol = headers.indexOf(operationTypesColumnHeader);
+    if (operationCol != -1) {
+      operations = await sheet.values.column(operationCol + 1, fromRow: 2);
+      await DatabaseProvider.deleteAllOperations();
+      for (var operation in operations) {
+        await DatabaseProvider.insertOperation(
+            OperationModel(id: null, name: operation, dt: '', kt: '', type: 0));
+      }
+    }
+  }
 
- static getOperations(sheet, headers) async {
-   var operationCol = headers.indexOf(operationTypesColumnHeader);
-   if (operationCol != -1) {
-     operations = await sheet.values.column(operationCol + 1, fromRow: 2);
-     await DatabaseProvider.deleteAllOperations();
-     for (var operation in operations) {
-       await DatabaseProvider.insertOperation(
-           OperationModel(id: null, name: operation, dt: '', kt: '', type: 0));
-     }
-   }
- }
-
- static getTeachers(sheet, headers) async {
-   var tichersCol = headers.indexOf(teachersColumnHeader);
-   if (tichersCol != -1) {
-     lessonNames = await sheet.values.column(tichersCol + 1, fromRow: 2);
-     await DatabaseProvider.deleteAllTeachers();
-     for (var teacher in lessonNames) {
-       await DatabaseProvider.insertTeacher(
-           TeacherModel(id: null, name: teacher));
-     }
-   }
- }
+  static getTeachers(sheet, headers) async {
+    var tichersCol = headers.indexOf(teachersColumnHeader);
+    if (tichersCol != -1) {
+      lessonNames = await sheet.values.column(tichersCol + 1, fromRow: 2);
+      await DatabaseProvider.deleteAllTeachers();
+      for (var teacher in lessonNames) {
+        await DatabaseProvider.insertTeacher(
+            TeacherModel(id: null, name: teacher));
+      }
+    }
+  }
 
   static getLessonNames(sheet, headers) async {
     var lesonNamesCol = headers.indexOf(lessonNamesColumnHeader);
@@ -68,79 +74,91 @@ class GoogleSheetsIntegration {
   }
 
   static getLessons(spreadsheet) async {
-    var sheetTra = spreadsheet.worksheetByTitle(lessonSheetTitle);
-    if (sheetTra != null) {
-      var lessonsXls = await sheetTra.values.allRows(fromRow: 2);
-      var epoch = new DateTime(1899, 12, 30);
-      var currentDate;
-      List<Map<String, dynamic>> dbLessons =
-          await DatabaseProvider.queryLessons();
+    var lessonsXls = await readLessonsFromGS(
+        spreadsheet); //await sheetTra.values.allRows(fromRow: 2);
+    List<Map<String, dynamic>> dbLessons =
+        await DatabaseProvider.queryLessons();
+    List<LessonModel> lessonsToAdd = [];
+    List<LessonModel> lessonsToUpd = [];
 
-      List<LessonModel> lessonsList =
-      List.generate(dbLessons.length, (index) {
-        return LessonModel().fromJson(dbLessons[index]);
-      });
-      try {
-        lessonsXls = lessonsXls.where((lesson) {
-          //GoogleSheets keep dates as days integer since 1900
-          if (lesson.isEmpty || lesson.length < 5 || int.tryParse(lesson[1]) == null)
-            return false;
-          currentDate = epoch.add(Duration(days: int.parse(lesson[1])));
-          return !lessonsList.contains(LessonModel(
-              date: DateFormat('dd.MM.yyyy').format(currentDate),
-              type: LessonModel.TYPE_TEACHER,
-              teacher: lesson[2],
-              name: lesson[3],
-              hours: int.tryParse(lesson[4]),
-              // student: lesson[3],
-              amount: lesson.length > 5 ? double.tryParse(lesson[5]) : null));
-          // comment: lesson.length > 5 ? lesson[5] : ''));
-        }).toList();
-      } catch(e,s) {
-        if (kDebugMode) {
-          print(e);
-          print(s);
-        }
-        rethrow;
-      }
-      for (var lesson in lessonsXls) {
-        try {
-          currentDate = epoch.add(Duration(days: int.parse(lesson[1])));
-          await DatabaseProvider.insertLesson(LessonModel(
-              date: DateFormat('dd.MM.yyyy').format(currentDate),
-              type: LessonModel.TYPE_TEACHER,
-              teacher: lesson[2],
-              name: lesson[3],
-              hours: int.tryParse(lesson[4]),
-              // student: lesson[3],
-              status: '2',
-              amount: lesson.length > 5 ? double.tryParse(lesson[5]) : null));
-        } catch (e,s) {
-          print(e);
-          print(s);
-        }
-      }
+    List<LessonModel> lessonsList = List.generate(dbLessons.length, (index) {
+      return LessonModel.fromJson(dbLessons[index]);
+    });
+
+    lessonsToAdd = lessonsXls.where((lesson) {
+      return !lessonsList.contains(lesson);
+    }).toList();
+
+    lessonsToUpd = lessonsList.where((lesson) {
+      return !lessonsXls.contains(lesson);
+    }).toList();
+
+    for (var lesson in lessonsToAdd) {
+      await DatabaseProvider.insertLesson(lesson);
+    }
+    for (var lesson in lessonsToUpd) {
+      lesson.status = null;
+      await DatabaseProvider.updateLesson(lesson, lesson.id!);
     }
   }
 
-  static Future<(List<TransactionModel>, List<ContragentModel>)> readFromGS(Spreadsheet spreadsheet) async {
-    List<TransactionModel> transactionsFromGS = [];
-    List<ContragentModel> contragentsFromGS = [];
-    var sheetTra = spreadsheet.worksheetByTitle(transactionSheetTitle);
-    if (sheetTra != null) {
-      var transactionsXls = await sheetTra.values.allRows(fromRow: 2);
+  static Future<List<LessonModel>> readLessonsFromGS(
+      Spreadsheet spreadsheet) async {
+    List<LessonModel> lessonsFromGS = [];
+    var sheetLes = spreadsheet.worksheetByTitle(lessonSheetTitle);
+    var fromRow = 2;
+    if (sheetLes != null) {
+      var lessonsXls = await sheetLes.values.allRows(fromRow: fromRow);
       var epoch = DateTime(1899, 12, 30);
       DateTime currentDate;
 
+      for (var ti = 0; ti < lessonsXls.length; ti++) {
+        var lesson = lessonsXls[ti];
+        if (lesson.isEmpty ||
+            lesson.length < 5 ||
+            int.tryParse(lesson[1]) == null) {
+          continue;
+        }
+        currentDate = epoch.add(Duration(days: int.parse(lesson[1])));
 
-      for (var transaction in transactionsXls) {
+        lessonsFromGS.add(LessonModel(
+            date: DateFormat('dd.MM.yyyy').format(currentDate),
+            name: lesson[3].trim(),
+            teacher: lesson[2].trim(),
+            // to: lesson[3].trim(),
+            hours: int.tryParse(lesson[4]),
+            amount: double.tryParse(lesson[5]),
+            comment: lesson.length > 6 ? lesson[6].trim() : '',
+            status: '2',
+            type: LessonModel.TYPE_TEACHER,
+            row_number: ti + fromRow));
+      }
+    }
+    return (lessonsFromGS);
+  }
+
+  static Future<(List<TransactionModel>, List<ContragentModel>)>
+      readTransactionsFromGS(Spreadsheet spreadsheet) async {
+    List<TransactionModel> transactionsFromGS = [];
+    List<ContragentModel> contragentsFromGS = [];
+    var sheetTra = spreadsheet.worksheetByTitle(transactionSheetTitle);
+    var fromRow = 2;
+    if (sheetTra != null) {
+      var transactionsXls = await sheetTra.values.allRows(fromRow: fromRow);
+      var epoch = DateTime(1899, 12, 30);
+      DateTime currentDate;
+
+      for (var ti = 0; ti < transactionsXls.length; ti++) {
+        var transaction = transactionsXls[ti];
         if (transaction.isEmpty || int.tryParse(transaction[0]) == null) {
           continue;
         }
         currentDate = epoch.add(Duration(days: int.parse(transaction[0])));
 
-        var ctr_to = ContragentModel(name: transaction[3].trim(), is_from:0, is_to: 1, type:0);
-        var ctr_from = ContragentModel(name: transaction[2].trim(), is_from:1, is_to: 0, type: 0);
+        var ctr_to = ContragentModel(
+            name: transaction[3].trim(), is_from: 0, is_to: 1, type: 0);
+        var ctr_from = ContragentModel(
+            name: transaction[2].trim(), is_from: 1, is_to: 0, type: 0);
         var i = contragentsFromGS.indexOf(ctr_to);
         if (i != -1) {
           contragentsFromGS[i].is_to = 1;
@@ -161,28 +179,32 @@ class GoogleSheetsIntegration {
             to: transaction[3].trim(),
             amount: double.tryParse(transaction[4]),
             comment: transaction.length > 5 ? transaction[5].trim() : '',
-            type: 0));
+            type: 0,
+            status: '2',
+            row_number: ti + fromRow));
       }
     }
     return (transactionsFromGS, contragentsFromGS);
   }
 
   static getTransaction(Spreadsheet spreadsheet) async {
-    var (transactionsFromGS, contragentsFromGS) = await readFromGS(spreadsheet);
+    var (transactionsFromGS, contragentsFromGS) =
+        await readTransactionsFromGS(spreadsheet);
     var dbContragents = await DatabaseProvider.queryContragents();
-    List<Map<String, dynamic>> dbTransactions = await DatabaseProvider.queryTransactions();
+    List<Map<String, dynamic>> dbTransactions =
+        await DatabaseProvider.queryTransactions();
     List<ContragentModel> contragentsToAdd = [];
     List<ContragentModel> contragentsToUpd = [];
     List<TransactionModel> transactionsToAddList = [];
     List<TransactionModel> transactionsToUpd = [];
 
     List<TransactionModel> transactionList =
-    List.generate(dbTransactions.length, (index) {
+        List.generate(dbTransactions.length, (index) {
       return TransactionModel.fromJson(dbTransactions[index]);
     });
 
     List<ContragentModel> contragentsExists =
-    List.generate(dbContragents.length, (index) {
+        List.generate(dbContragents.length, (index) {
       return ContragentModel.fromJson(dbContragents[index]);
     }, growable: true);
 
@@ -194,7 +216,7 @@ class GoogleSheetsIntegration {
       return !transactionsFromGS.contains(transaction);
     }).toList();
 
-    for(var ctr in contragentsFromGS) {
+    for (var ctr in contragentsFromGS) {
       var idx = contragentsExists.indexOf(ctr);
       if (idx == -1) {
         contragentsExists.add(ctr);
@@ -217,7 +239,6 @@ class GoogleSheetsIntegration {
     }
 
     for (var transaction in transactionsToAddList) {
-      transaction.status = '2';
       await DatabaseProvider.insertTransaction(transaction);
     }
 
@@ -225,10 +246,9 @@ class GoogleSheetsIntegration {
       transaction.status = null;
       await DatabaseProvider.updateTransaction(transaction, transaction.id!);
     }
-
   }
 
- static Future<Map<String, List<String>>> getDataFromGoogleSheets() async {
+  static Future<Map<String, List<String>>> getDataFromGoogleSheets() async {
     final gsheets = GSheets(Keys.googleKey);
     final spreadsheet = await gsheets.spreadsheet(spreadsheetId);
     var sheet = spreadsheet.worksheetByTitle(settingsSheetTitle);
@@ -252,7 +272,8 @@ class GoogleSheetsIntegration {
     return {'operations': operations, 'teachers': lessonNames};
   }
 
-  static Future<bool> addTransactionToGoogleSheets(TransactionModel transaction) async {
+  static Future<bool> addTransactionToGoogleSheets(
+      TransactionModel transaction) async {
     try {
       final gsheets = GSheets(Keys.googleKey);
       final spreadsheet = await gsheets.spreadsheet(spreadsheetId);
@@ -265,7 +286,15 @@ class GoogleSheetsIntegration {
       // update cell at 'B2' by inserting string 'new'
       // print(lastRow);
       final DateFormat formatter = DateFormat('dd.MM.yyyy');
-      if(await sheet.values.insertRow(lastRow+1, [transaction.date, transaction.operation,transaction.from,transaction.to, transaction.amount, transaction.comment, 'nf'])){
+      if (await sheet.values.insertRow(lastRow + 1, [
+        transaction.date,
+        transaction.operation,
+        transaction.from,
+        transaction.to,
+        transaction.amount,
+        transaction.comment,
+        'nf'
+      ])) {
         return true;
         // db.update('table', values)
         // updateTransaction()
@@ -289,7 +318,17 @@ class GoogleSheetsIntegration {
       await initializeDateFormatting('ru', null);
       final DateFormat formatter = DateFormat('MMMM', 'ru');
       print(formatter.format(DateFormat("dd.MM.yyyy").parse(lesson.date!)));
-      if(await sheet.values.insertRow(lastRow+1, [formatter.format(DateFormat("dd.MM.yyyy").parse(lesson.date!)), lesson.date, lesson.teacher, lesson.name, lesson.hours, lesson.amount,'', lesson.comment, 'nf'])){
+      if (await sheet.values.insertRow(lastRow + 1, [
+        formatter.format(DateFormat("dd.MM.yyyy").parse(lesson.date!)),
+        lesson.date,
+        lesson.teacher,
+        lesson.name,
+        lesson.hours,
+        lesson.amount,
+        '',
+        lesson.comment,
+        'nf'
+      ])) {
         return true;
       }
     } catch (e) {

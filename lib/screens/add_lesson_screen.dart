@@ -8,6 +8,7 @@ import 'package:neo_finance/models/lesson.dart';
 import 'package:get/get.dart';
 
 import '../constants/colors.dart';
+import '../controllers/home_controller.dart';
 import '../controllers/theme_controller.dart';
 import '../database_provider.dart';
 import '../widgets/input_field.dart';
@@ -17,11 +18,14 @@ class AddLessonScreen extends StatelessWidget {
 
   final AddLessonController _addLessonController =
       Get.put(AddLessonController());
+  final HomeController _homeController = Get.put(HomeController());
 
   final _themeController = Get.find<ThemeController>();
 
   final TextEditingController _hourController = TextEditingController(text: '1');
   final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _teacherController = TextEditingController();
+  final TextEditingController _lessonController = TextEditingController();
 
   final DateTime now = DateTime.now();
 
@@ -31,7 +35,7 @@ class AddLessonScreen extends StatelessWidget {
     return Obx(() {
       return Scaffold(
         appBar: _appBar(),
-        body: Padding(
+        body: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Column(children: [
               InputField(
@@ -48,9 +52,7 @@ class AddLessonScreen extends StatelessWidget {
                 ),
               ),
               InputField(
-                hint: _addLessonController.selectedTeacher.isNotEmpty
-                    ? _addLessonController.selectedTeacher
-                    : _addLessonController.teachers[0],
+                controller: _teacherController,
                 label: 'Учитель',
                 widget: IconButton(
                     onPressed: () => _showDialog(context, true),
@@ -59,9 +61,7 @@ class AddLessonScreen extends StatelessWidget {
                     )),
               ),
               InputField(
-                hint: _addLessonController.selectedName.isNotEmpty
-                    ? _addLessonController.selectedName
-                    : _addLessonController.lessonNames[0],
+                controller: _lessonController,
                 label: 'Предмет',
                 widget: IconButton(
                     onPressed: () => _showDialog(context, false),
@@ -70,15 +70,14 @@ class AddLessonScreen extends StatelessWidget {
                     )),
               ),
               InputField(
-                hint: '1',
                 label: 'Часы',
                 controller: _hourController,
                 isAmount: true,
               ),
-              TextFormField(
+              InputField(
                 controller: _amountController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Стоимость'),
+                isAmount: true,
+                label: 'Стоимость',
               ),
             ])),
         floatingActionButton: FloatingActionButton(
@@ -107,8 +106,8 @@ class AddLessonScreen extends StatelessWidget {
             return ListTile(
               onTap: () {
                 isTeachers
-                    ? _addLessonController.updateSelectedTeacher(data)
-                    : _addLessonController.updateSelectedName(data);
+                    ? _teacherController.text = data
+                    : _lessonController.text = data;
                 if(isTeachers){
                   // _amountController.text = (1000*i).toString();
                 }
@@ -131,7 +130,7 @@ class AddLessonScreen extends StatelessWidget {
 
     if (pickerDate != null) {
       _addLessonController
-          .updateSelectedDate(DateFormat.yMd().format(pickerDate));
+          .updateSelectedDate(DateFormat("dd.MM.yyyy").format(pickerDate));
     }
   }
 
@@ -140,22 +139,24 @@ class AddLessonScreen extends StatelessWidget {
       amount: _amountController.text.isEmpty
           ? null
           : double.parse(_amountController.text),
-      date: DateFormat('dd.MM.yyyy').format(DateTime.now()),
-      name: _addLessonController.selectedName.isNotEmpty ?
-      _addLessonController.selectedName : _addLessonController.lessonNames[0],
-      teacher: _addLessonController.selectedTeacher.isNotEmpty
-          ? _addLessonController.selectedTeacher
-          : _addLessonController.teachers[0],
+      date: _addLessonController.selectedDate,
+      name: _lessonController.text,
+      teacher: _teacherController.text,
       student: _addLessonController.selectedStudent,
       type: _addLessonController.lessonType,
       hours: int.tryParse(_hourController.text),
       comment: '',
-      //date: _addTransactionController.selectedDate,
     );
-    if (await GoogleSheetsIntegration.addLessonToGoogleSheets(lessonModel)) {
-      lessonModel.status = '1';
-    }
     await DatabaseProvider.insertLesson(lessonModel);
+    var id = await DatabaseProvider.getInsrtedId();
+    lessonModel.id = id;
+    _homeController.lessons.add(lessonModel);
+    int idx = _homeController.lessons.length-1;
+    GoogleSheetsIntegration.addLessonToGoogleSheets(
+        lessonModel).then((value) {
+      lessonModel.status = '1';
+      _homeController.updateLesson(idx, lessonModel);
+    });
     Get.back();
   }
 

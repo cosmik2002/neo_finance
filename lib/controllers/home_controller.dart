@@ -65,7 +65,7 @@ class HomeController extends GetxController {
     List<Map<String, dynamic>> lessonsLc =
     await DatabaseProvider.queryLessons();
     _lessons.value = List.generate(lessonsLc.length, (index) {
-      return LessonModel().fromJson(lessonsLc[index]);
+      return LessonModel.fromJson(lessonsLc[index]);
     });
   }
 

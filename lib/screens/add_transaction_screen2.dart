@@ -155,7 +155,7 @@ class AddTransactionScreen2 extends StatelessWidget {
 
     if (pickerDate != null) {
       _addTransactionController
-          .updateSelectedDate(DateFormat.yMd().format(pickerDate));
+          .updateSelectedDate(DateFormat("dd.MM.yyyy").format(pickerDate));
     }
   }
 
@@ -190,9 +190,9 @@ class AddTransactionScreen2 extends StatelessWidget {
         'Добавить операцию',
         style: TextStyle(color: _themeController.color),
       ),
-      leading: IconButton(
+/*      leading: IconButton(
           onPressed: () => Get.back(),
-          icon: Icon(Icons.arrow_back, color: _themeController.color)),
+          icon: Icon(Icons.arrow_back, color: _themeController.color)),*/
     );
   }
 }
