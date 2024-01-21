@@ -117,8 +117,9 @@ class HomeScreen extends StatelessWidget {
             onPressed: () async {
               await _addLessonController.updateTeachers();
               await _addLessonController.updateLessonNames();
+              await _addLessonController.loadLesson();
               await Get.to(() => AddLessonScreen());
-              _homeController.getLessons();
+              // _homeController.getLessons();
             },
             backgroundColor: Colors.redAccent,
             child: Icon(

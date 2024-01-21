@@ -8,12 +8,12 @@ class LessonModel {
   final String? student;
   final int? hours;
   int? row_number;
-  String? type;
+  String type;
   String? status;
   static const TYPE_TEACHER = '1';
   static const TYPE_STUDENT = '2';
 
-  LessonModel({this.id, this.date, this.amount,this.name, this.comment, this.teacher, this.student, this.hours, this.type, this.status, this.row_number});
+  LessonModel({this.id, this.date, this.amount,this.name, this.comment, this.teacher, this.student, this.hours, required this.type, this.status, this.row_number});
   @override
   bool operator == (
       dynamic other
@@ -21,6 +21,7 @@ class LessonModel {
       other is LessonModel &&
           other.runtimeType == runtimeType
           && other.date == date
+          && other.name == name
           && other.hours == hours
           && other.type == type
           && (type == TYPE_TEACHER ? other.teacher == teacher : other.student == student) && other.comment == comment;

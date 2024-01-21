@@ -103,12 +103,12 @@ class GoogleSheetsIntegration {
   }
 
   static Future<List<LessonModel>> readLessonsFromGS(
-      Spreadsheet spreadsheet) async {
+      Spreadsheet spreadsheet, [int fromRow = 2, int? count]) async {
     List<LessonModel> lessonsFromGS = [];
     var sheetLes = spreadsheet.worksheetByTitle(lessonSheetTitle);
-    var fromRow = 2;
+    // var fromRow = 2;
     if (sheetLes != null) {
-      var lessonsXls = await sheetLes.values.allRows(fromRow: fromRow);
+      var lessonsXls = await sheetLes.values.allRows(fromRow: fromRow, count: count ?? -1);
       var epoch = DateTime(1899, 12, 30);
       DateTime currentDate;
 
@@ -306,7 +306,53 @@ class GoogleSheetsIntegration {
     return false;
   }
 
-  static Future<bool> addLessonToGoogleSheets(LessonModel lesson) async {
+  static Future<Worksheet?> getSheet(String sheetTitle, [createIfNotExists = true]) async {
+    final gsheets = GSheets(Keys.googleKey);
+    final spreadsheet = await gsheets.spreadsheet(spreadsheetId);
+    var sheet = spreadsheet.worksheetByTitle(lessonSheetTitle);
+    if(createIfNotExists && sheet == null) {
+      // create worksheet if it does not exist yet
+      sheet ??= await spreadsheet.addWorksheet(lessonSheetTitle);
+    }
+    return sheet;
+  }
+
+  static Future<bool> checkLessonToGoogleSheets(LessonModel lesson, int row_number) async {
+    final gsheets = GSheets(Keys.googleKey);
+    final spreadsheet = await gsheets.spreadsheet(spreadsheetId);
+    var lessonGS =  await readLessonsFromGS(spreadsheet, row_number, 1);
+  return lessonGS.length ==1 && lessonGS[0] == lesson;
+  }
+
+  static Future<int> updateLessonToGoogleSheets(LessonModel lesson, row_number) async {
+   try {
+    final gsheets = GSheets(Keys.googleKey);
+    final spreadsheet = await gsheets.spreadsheet(spreadsheetId);
+    var sheet = spreadsheet.worksheetByTitle(lessonSheetTitle);
+    // create worksheet if it does not exist yet
+    sheet ??= await spreadsheet.addWorksheet(lessonSheetTitle);
+    await initializeDateFormatting('ru', null);
+    final DateFormat formatter = DateFormat('MMMM', 'ru');
+    if (await sheet.values.insertRow(row_number, [
+      formatter.format(DateFormat("dd.MM.yyyy").parse(lesson.date!)),
+      lesson.date,
+      lesson.teacher,
+      lesson.name,
+      lesson.hours,
+      lesson.amount,
+      '',
+      lesson.comment,
+      'nf'
+    ])) {
+      return 0;
+    }
+  } catch (e) {
+  print('Error uploading data: $e');
+  }
+  return -1;
+  }
+
+  static Future<int> addLessonToGoogleSheets(LessonModel lesson) async {
     try {
       final gsheets = GSheets(Keys.googleKey);
       final spreadsheet = await gsheets.spreadsheet(spreadsheetId);
@@ -329,11 +375,11 @@ class GoogleSheetsIntegration {
         lesson.comment,
         'nf'
       ])) {
-        return true;
+        return lastRow+1;
       }
     } catch (e) {
       print('Error uploading data: $e');
     }
-    return false;
+    return -1;
   }
 }

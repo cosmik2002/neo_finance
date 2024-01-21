@@ -17,8 +17,8 @@ class AddTransactionScreen2 extends StatelessWidget {
   AddTransactionScreen2({Key? key}) : super(key: key);
 
   final AddTransactionController _addTransactionController =
-      Get.put(AddTransactionController());
-  final HomeController _homeController = Get.put(HomeController());
+      Get.find<AddTransactionController>();
+  final HomeController _homeController = Get.find<HomeController>();
 
   final _themeController = Get.find<ThemeController>();
 

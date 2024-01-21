@@ -10,13 +10,14 @@ class InputField extends StatelessWidget {
   final TextEditingController? controller;
   final Widget? widget;
   final bool focus;
+  final void Function(String)? onChanged;
   InputField({
     Key? key,
     this.hint,
     required this.label,
     this.isAmount = false,
     this.controller,
-    this.widget,this.focus = false
+    this.widget,this.focus = false, this.onChanged
   }) : super(key: key);
 
   @override
@@ -66,6 +67,7 @@ class InputField extends StatelessWidget {
                         border: InputBorder.none,
                         hintText: hint,
                         hintStyle: Themes().labelStyle),
+                    onChanged: onChanged,
                   ),
                 ),
                 widget == null
