@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_simple_calculator/flutter_simple_calculator.dart';
 import 'package:intl/intl.dart';
 import 'package:neo_finance/controllers/home_controller.dart';
 import 'package:neo_finance/google_sheet_provider.dart';
@@ -34,7 +35,7 @@ class AddTransactionScreen2 extends StatelessWidget {
   Widget build(BuildContext context) {
     operField = InputField(
       hint:'',
-      label: 'Category',
+      label: 'Категория',
       controller: _operationController,
       widget: IconButton(
           onPressed: () => _showDialog(context, 0),
@@ -59,7 +60,7 @@ class AddTransactionScreen2 extends StatelessWidget {
                   hint: _addTransactionController.selectedDate.isNotEmpty
                       ? _addTransactionController.selectedDate
                       : DateFormat("dd.MM.yyyy").format(now),
-                  label: 'Date',
+                  label: 'Дата',
                   widget: IconButton(
                     onPressed: () => _getDateFromUser(context),
                     icon: Icon(
@@ -70,9 +71,14 @@ class AddTransactionScreen2 extends StatelessWidget {
                 ),
                 InputField(
                   hint: '',
+                  widget:  IconButton(
+                      onPressed: () => _showCalculator(context, _amountController.text),
+                      icon: Icon(
+                        Icons.calculate,
+                      )),
                   focus: true,
                   controller: _amountController,
-                  label: 'Amount',
+                  label: 'Сумма',
                 ),
                 operField,
                 InputField(
@@ -107,6 +113,31 @@ class AddTransactionScreen2 extends StatelessWidget {
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       );
     });
+  }
+
+  _showCalculator (BuildContext context, val) {
+    Get.defaultDialog(
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width * .7,
+        height: MediaQuery.of(context).size.height * .4,
+        child: SimpleCalculator(
+          value: double.tryParse(val) ?? 0,
+          hideExpression: true,
+          onChanged: (key, value, expression) {
+            _amountController.text = value.toString();
+            if (key == "=") {
+              Get.back();
+            }
+          },
+        ),
+      )
+/*
+      theme: const CalculatorThemeData(
+        displayColor: Colors.black,
+        displayStyle: const TextStyle(fontSize: 80, color: Colors.yellow),
+      ),
+*/
+    );
   }
 
   _showDialog(BuildContext context, int type) {

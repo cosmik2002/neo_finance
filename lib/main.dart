@@ -14,6 +14,9 @@ import 'package:sqflite/sqflite.dart';
 
 import 'database_provider.dart';
 
+// flutter build apk --target-platform android-arm64 --split-per-abi --obfuscate --split-debug-info=.
+
+
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await ScreenUtil.ensureScreenSize();

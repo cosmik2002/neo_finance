@@ -13,7 +13,6 @@ import 'package:intl/intl.dart';
 // import 'package:sqflite/sqflite.dart' as sqlite;
 import 'package:neo_finance/database_provider.dart';
 import 'package:neo_finance/keys.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:get/get.dart';
 import 'controllers/add_transaction_controller.dart';
 
@@ -127,7 +126,7 @@ class GoogleSheetsIntegration {
             teacher: lesson[2].trim(),
             // to: lesson[3].trim(),
             hours: int.tryParse(lesson[4]),
-            amount: double.tryParse(lesson[5]),
+            amount: lesson.length > 5 ? double.tryParse(lesson[5]) : 0,
             comment: lesson.length > 6 ? lesson[6].trim() : '',
             status: '2',
             type: LessonModel.TYPE_TEACHER,
@@ -265,9 +264,11 @@ class GoogleSheetsIntegration {
       await getLessons(spreadsheet);
       DatabaseProvider.commitBatch(noResult: true);
     } catch (e, s) {
-      print(e);
-      print(s);
-      return {};
+      if (kDebugMode) {
+        print(e);
+        print(s);
+      }
+      rethrow;
     }
     return {'operations': operations, 'teachers': lessonNames};
   }
@@ -302,6 +303,7 @@ class GoogleSheetsIntegration {
       }
     } catch (e) {
       print('Error uploading data: $e');
+      rethrow;
     }
     return false;
   }
@@ -378,7 +380,10 @@ class GoogleSheetsIntegration {
         return lastRow+1;
       }
     } catch (e) {
-      print('Error uploading data: $e');
+      if (kDebugMode) {
+        print('Error uploading data: $e');
+      }
+      rethrow;
     }
     return -1;
   }

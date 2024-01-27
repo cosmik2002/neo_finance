@@ -23,6 +23,9 @@ class SettingsTab extends StatelessWidget {
                 _homeController.updateBase();
               }
           ),
+          Text("lessons " + _homeController.lessons.length.toString()),
+          Padding(padding: EdgeInsets.symmetric(vertical: 15)),
+          Text("transactions " + _homeController.myTransactions.length.toString()),
         ],
       );
   }
