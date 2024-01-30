@@ -5,12 +5,12 @@ class TransactionModel {
   final String? comment;
   final String? operation;
   final String? from;
-  final String? to;
+  final String to;
   String? status;
   int type;
   int? row_number;
 
-  TransactionModel({this.id, required this.date, this.amount,this.operation, this.comment, this.from, this.to, this.status, required this.type, this.row_number});
+  TransactionModel({this.id, required this.date, this.amount,this.operation, this.comment, this.from, this.to = '', this.status, required this.type, this.row_number});
   @override
   bool operator == (
       dynamic other
@@ -64,6 +64,4 @@ class TransactionModel {
     type: json['type'],
     row_number: json['row_number']
   );
-
-
 }

@@ -67,7 +67,7 @@ class InputField extends StatelessWidget {
                         border: InputBorder.none,
                         hintText: hint,
                         hintStyle: Themes().labelStyle),
-                    onFieldSubmitted: onChanged,
+                    onChanged: onChanged,
                   ),
                 ),
                 widget == null

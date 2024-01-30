@@ -103,8 +103,9 @@ class HomeScreen extends StatelessWidget {
         ? FloatingActionButton(
             backgroundColor: primaryColor,
             onPressed: () async {
-              await _addTransactionController.updateOperationsButtons();
+              await _addTransactionController.updateOperations();
               await _addTransactionController.updateContragents();
+              _addTransactionController.loadTransaction();
               await Get.to(() => AddTransactionScreen2());
               // _homeController.getTransactions();
             },
@@ -117,7 +118,7 @@ class HomeScreen extends StatelessWidget {
             onPressed: () async {
               await _addLessonController.updateTeachers();
               await _addLessonController.updateLessonNames();
-              await _addLessonController.loadLesson();
+              _addLessonController.loadLesson();
               await Get.to(() => AddLessonScreen());
               // _homeController.getLessons();
             },

@@ -33,15 +33,12 @@ class AddLessonScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     _addLessonController.changeLessonType(LessonModel.TYPE_TEACHER);
+    _teacherController.text = _addLessonController.selectedTeacher;
+    _lessonController.text = _addLessonController.selectedName;
+    _dateController.text = _addLessonController.selectedDate;
+    _amountController.text = _addLessonController.amount.toString();
+    _hourController.text = _addLessonController.hour.toString();
     return Obx(() {
-      _teacherController.text = _addLessonController.selectedTeacher;
-      _lessonController.text = _addLessonController.selectedName;
-      _dateController.text = _addLessonController.selectedDate.isNotEmpty
-          ? _addLessonController.selectedDate
-          : DateFormat("dd.MM.yyyy").format(now);
-      _amountController.text = _addLessonController.amount.toString();
-      _hourController.text = _addLessonController.hour.toString();
-
       return Scaffold(
         appBar: _appBar(),
         body: SingleChildScrollView(
@@ -87,7 +84,7 @@ class AddLessonScreen extends StatelessWidget {
                 controller: _hourController,
                 isAmount: true,
                 onChanged: (data){
-                  _addLessonController.updateHour(int.parse(data));
+                  _addLessonController.updateHour(int.tryParse(data) ?? 0);
                 },
 
               ),
@@ -96,7 +93,7 @@ class AddLessonScreen extends StatelessWidget {
                 isAmount: true,
                 label: 'Стоимость',
                 onChanged: (data){
-                  _addLessonController.updateAmount(double.parse(data));
+                  _addLessonController.updateAmount(double.tryParse(data) ?? 0);
                 },
               ),
             ])),
@@ -128,6 +125,9 @@ class AddLessonScreen extends StatelessWidget {
                 isTeachers
                     ? _addLessonController.updateSelectedTeacher(data)
                     : _addLessonController.updateSelectedName(data);
+                isTeachers
+                    ? _teacherController.text = data
+                    : _lessonController.text = data;
                 if(isTeachers){
                   // _amountController.text = (1000*i).toString();
                 }
@@ -188,9 +188,11 @@ class AddLessonScreen extends StatelessWidget {
       int idx = _homeController.lessons.length - 1;
       GoogleSheetsIntegration.addLessonToGoogleSheets(
           lessonModel).then((value) {
-        lessonModel.status = '1';
-        lessonModel.row_number = value;
-        _homeController.updateLesson(idx, lessonModel);
+        if(value >= 0) {
+          lessonModel.status = '1';
+          lessonModel.row_number = value;
+          _homeController.updateLesson(idx, lessonModel);
+        }
       });
     }
     Get.back();

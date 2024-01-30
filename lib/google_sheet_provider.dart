@@ -137,13 +137,13 @@ class GoogleSheetsIntegration {
   }
 
   static Future<(List<TransactionModel>, List<ContragentModel>)>
-      readTransactionsFromGS(Spreadsheet spreadsheet) async {
+      readTransactionsFromGS(Spreadsheet spreadsheet, [int fromRow = 2, int? count]) async {
     List<TransactionModel> transactionsFromGS = [];
     List<ContragentModel> contragentsFromGS = [];
     var sheetTra = spreadsheet.worksheetByTitle(transactionSheetTitle);
-    var fromRow = 2;
+    // var fromRow = 2;
     if (sheetTra != null) {
-      var transactionsXls = await sheetTra.values.allRows(fromRow: fromRow);
+      var transactionsXls = await sheetTra.values.allRows(fromRow: fromRow, count: count ?? -1);
       var epoch = DateTime(1899, 12, 30);
       DateTime currentDate;
 
@@ -273,7 +273,7 @@ class GoogleSheetsIntegration {
     return {'operations': operations, 'teachers': lessonNames};
   }
 
-  static Future<bool> addTransactionToGoogleSheets(
+  static Future<int> addTransactionToGoogleSheets(
       TransactionModel transaction) async {
     try {
       final gsheets = GSheets(Keys.googleKey);
@@ -296,7 +296,7 @@ class GoogleSheetsIntegration {
         transaction.comment,
         'nf'
       ])) {
-        return true;
+        return lastRow+1;
         // db.update('table', values)
         // updateTransaction()
         //  transaction.status=1;
@@ -305,7 +305,7 @@ class GoogleSheetsIntegration {
       print('Error uploading data: $e');
       rethrow;
     }
-    return false;
+    return -1;
   }
 
   static Future<Worksheet?> getSheet(String sheetTitle, [createIfNotExists = true]) async {
@@ -317,6 +317,39 @@ class GoogleSheetsIntegration {
       sheet ??= await spreadsheet.addWorksheet(lessonSheetTitle);
     }
     return sheet;
+  }
+
+  static Future<bool> checkTransactionToGoogleSheets(TransactionModel tra, int row_number) async {
+    final gsheets = GSheets(Keys.googleKey);
+    final spreadsheet = await gsheets.spreadsheet(spreadsheetId);
+    var (traGS, ctGs) =  await readTransactionsFromGS(spreadsheet, row_number, 1);
+    return traGS.length ==1 && traGS[0] == tra;
+  }
+
+  static Future<int> updateTransactionToGoogleSheets(TransactionModel tra, row_number) async {
+    try {
+      final gsheets = GSheets(Keys.googleKey);
+      final spreadsheet = await gsheets.spreadsheet(spreadsheetId);
+      var sheet = spreadsheet.worksheetByTitle(transactionSheetTitle);
+      // create worksheet if it does not exist yet
+      sheet ??= await spreadsheet.addWorksheet(transactionSheetTitle);
+      await initializeDateFormatting('ru', null);
+      final DateFormat formatter = DateFormat('MMMM', 'ru');
+      if (await sheet.values.insertRow(row_number, [
+        tra.date,
+        tra.operation,
+        tra.from,
+        tra.to,
+        tra.amount,
+        tra.comment,
+        'nf'
+      ])) {
+        return 0;
+      }
+    } catch (e) {
+      print('Error uploading data: $e');
+    }
+    return -1;
   }
 
   static Future<bool> checkLessonToGoogleSheets(LessonModel lesson, int row_number) async {

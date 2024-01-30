@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:neo_finance/models/lesson.dart';
@@ -8,6 +9,20 @@ class AddLessonController extends GetxController {
   int idx=-1;
   RxBool _isInAsyncCall = false.obs;
   int? row_number;
+  @override
+  void onInit() {
+    // TODO: implement onInit
+    super.onInit();
+    debugPrint("AddLessonController INIT");
+
+  }
+
+  @override
+  void onClose() {
+    // TODO: implement onClose
+    super.onClose();
+    debugPrint("AddLessonController CLOSE");
+  }
   final Rx<String> _lessonType = ''.obs;
   final Rx<String> _selectedDate = DateFormat("dd.MM.yyyy").format(DateTime.now()).obs;
   final Rx<String> _selectedName = Rx<String>('');

@@ -77,7 +77,7 @@ class LessonsList extends StatelessWidget {
                     if(check) {
                       _addLessonController.isInAsyncCall = false;
                       _addLessonController.loadLesson(lesson, idx);
-                      await Get.to(() => AddLessonScreen());
+                      await Get.to(() => AddLessonScreen(), arguments: lesson);
                       // _homeController.getLessons();
                     } else {
                       lesson.status = null;
