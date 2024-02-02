@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_simple_calculator/flutter_simple_calculator.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:neo_finance/controllers/home_controller.dart';
 import 'package:neo_finance/google_sheet_provider.dart';
@@ -19,7 +18,7 @@ class AddTransactionScreen2 extends StatelessWidget {
   AddTransactionScreen2({Key? key}) : super(key: key);
 
   final AddTransactionController _addTransactionController =
-      Get.find<AddTransactionController>();
+      Get.put(AddTransactionController());
   final HomeController _homeController = Get.find();
 
   final _themeController = Get.find<ThemeController>();
@@ -38,8 +37,10 @@ class AddTransactionScreen2 extends StatelessWidget {
     _operationController.text = _addTransactionController.selectedOperation;
     _fromController.text = _addTransactionController.selectedFrom;
     _toController.text = _addTransactionController.selectedTo;
-    _amountController.text = _addTransactionController.amount.toString();
+    _amountController.text = _addTransactionController.amount !=0 ? _addTransactionController.amount.toString() : "";
     _commentController.text = _addTransactionController.comment;
+    _amountController.selection =  TextSelection(baseOffset: 0,
+      extentOffset: _amountController.text.length);
     return Obx(() {
       return Scaffold(
           appBar: _appBar(),
@@ -64,12 +65,11 @@ class AddTransactionScreen2 extends StatelessWidget {
                         Icons.calculate,
                       )),
                   focus: true,
+                  // _amountController.selection = TextSelection(baseOffset: 0, extentOffset: _controller.value.text.length)
                   controller: _amountController,
+                  isAmount: true,
                   label: 'Сумма',
                   onChanged: (data) {
-                    //todo разобраться нафига это надо, почему при сохранении не смотреть в контроллеры?
-                    //какая-то замута была с диалогом выбора из списка
-                    //тут проблема т.к. amount реактивный и сразу перерисовывается, не получается нормально ввести цифры
                     _addTransactionController.amount = double.tryParse(data) ?? 0;
                   },
                 ),
@@ -159,35 +159,49 @@ class AddTransactionScreen2 extends StatelessWidget {
       content: SizedBox(
         width: MediaQuery.of(context).size.width * .7,
         height: MediaQuery.of(context).size.height * .4,
-        child: ListView.builder(
-          itemCount: type==0
-              ? _addTransactionController.operations.length
-              : _addTransactionController.contragents.length,
-          itemBuilder: (context, i) {
-            final data = type == 0
-                ? _addTransactionController.operations[i]
-                : _addTransactionController.contragents[i];
-            return ListTile(
-              onTap: () {
-                switch (type) {
-                  case 0:
-                    _operationController.text = data;
-                  _addTransactionController.selectedOperation = data;
-                    break;
-                  case 1:
-                    _fromController.text = data;
-                  _addTransactionController.selectedFrom = data;
-                    break;
-                  case 2:
-                    _toController.text = data;
-                    _addTransactionController.selectedTo = data;
-                    break;
-                }
-                Get.back();
-              },
-              title: Text(data),
-            );
-          },
+        child: Column(
+          children: [
+            TextField(onChanged: (data){
+              //todo доделать поле сделать без рамки и подписи, только черта снизу
+               type==0
+                  ? _addTransactionController.filterOperations(data)
+                  : _addTransactionController.filterContragents(data);
+            },),
+            Obx(()=>
+               Expanded(
+                child: ListView.builder(
+                  itemCount: type==0
+                      ? _addTransactionController.operations.length
+                      : _addTransactionController.contragents.length,
+                  itemBuilder: (context, i) {
+                    final data = type == 0
+                        ? _addTransactionController.operations[i]
+                        : _addTransactionController.contragents[i];
+                    return ListTile(
+                      onTap: () {
+                        switch (type) {
+                          case 0:
+                            _operationController.text = data;
+                          _addTransactionController.selectedOperation = data;
+                            break;
+                          case 1:
+                            _fromController.text = data;
+                          _addTransactionController.selectedFrom = data;
+                            break;
+                          case 2:
+                            _toController.text = data;
+                            _addTransactionController.selectedTo = data;
+                            break;
+                        }
+                        Get.back();
+                      },
+                      title: Text(data),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

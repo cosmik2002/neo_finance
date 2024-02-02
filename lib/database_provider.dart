@@ -278,11 +278,11 @@ class DatabaseProvider {
   }
 
   static Future<List<Map<String, dynamic>>> queryLessonNames() async {
-    return queryTable(_lessonNamesTableName);
+    return queryTable(_lessonNamesTableName, orderBy: "name");
   }
 
   static Future<List<Map<String, dynamic>>> queryTeachers() async {
-    return queryTable(_teachersTableName);
+    return queryTable(_teachersTableName, orderBy: "name");
   }
 
   static Future<List<Map<String, dynamic>>> queryStudents() async {
@@ -290,10 +290,10 @@ class DatabaseProvider {
   }
 
   static Future<List<Map<String, dynamic>>> queryContragents() async {
-    return queryTable(_contragentsTableName);
+    return queryTable(_contragentsTableName, orderBy: "name");
   }
 
   static Future<List<Map<String, dynamic>>> queryOperations() async {
-    return queryTable(_operationsTableName);
+    return queryTable(_operationsTableName, orderBy: "name");
   }
 }

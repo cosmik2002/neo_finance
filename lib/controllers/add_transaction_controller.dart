@@ -10,7 +10,7 @@ class AddTransactionController extends GetxController {
 
   RxInt _id = (-1).obs;
   int _idx = -1;
-  RxBool _isInAsyncCall = false.obs;
+
   int? _row_number;
 
 /*
@@ -30,6 +30,8 @@ class AddTransactionController extends GetxController {
   final Rx<String> _selectedTo = ''.obs;
   final Rx<String> _comment = ''.obs;
   final Rx<double> _amount = 0.0.obs;
+  List<String> _origoperations = [];
+  List<String> _origcontragents = [];
   final Rx<List<String>> _operations = Rx<List<String>>([]);
   final Rx<List<String>> _contragents = Rx<List<String>>([]);
 
@@ -37,6 +39,13 @@ class AddTransactionController extends GetxController {
   void onInit() {
     // TODO: implement onInit
     super.onInit();
+    updateOperations();
+    updateContragents();
+    if(Get.arguments != null) {
+      loadTransaction(Get.arguments['tm'], Get.arguments['idx']);
+    } else {
+      loadTransaction();
+    }
     debugPrint("AddTransactionController INIT");
   }
 
@@ -50,9 +59,6 @@ class AddTransactionController extends GetxController {
   int get id => _id.value;
   int get idx => _idx;
   int get row_number => _row_number ?? -1;
-  bool get isInAsyncCall => _isInAsyncCall();
-
-  set isInAsyncCall(bool v) => _isInAsyncCall(v);
 
   String get selectedDate => _selectedDate.value;
 
@@ -101,19 +107,29 @@ class AddTransactionController extends GetxController {
     _row_number = tra.row_number ?? -1;
   }
 
+  filterOperations(filter) {
+    _operations.value = _origoperations.where((element) => element.toLowerCase().contains(filter.toLowerCase())).toList();
+  }
+
+  filterContragents(filter) {
+    _contragents.value = _origcontragents.where((element) => element.toLowerCase().contains(filter.toLowerCase())).toList();
+  }
+
   updateOperations() async {
     List<Map<String, dynamic>> operations =
         await DatabaseProvider.queryOperations();
-    _operations.value = List.generate(operations.length, (index) {
+    _origoperations = List.generate(operations.length, (index) {
       return operations[index]['name'];
     });
+    _operations.value = _origoperations;
   }
 
   updateContragents() async {
     List<Map<String, dynamic>> contragetns =
         await DatabaseProvider.queryContragents();
-    _contragents.value = List.generate(contragetns.length, (index) {
+    _origcontragents = List.generate(contragetns.length, (index) {
       return contragetns[index]['name'];
     });
+    _contragents.value = _origcontragents;
   }
 }

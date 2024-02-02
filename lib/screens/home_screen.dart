@@ -14,8 +14,8 @@ import 'add_transaction_screen2.dart';
 
 class HomeScreen extends StatelessWidget {
   final HomeController _homeController = Get.put(HomeController());
-  final AddTransactionController _addTransactionController =
-      Get.put(AddTransactionController());
+  // final AddTransactionController _addTransactionController =
+  //     Get.put(AddTransactionController());
   final AddLessonController _addLessonController = Get.put(AddLessonController());
   // final _themeController = Get.find<ThemeController>();
 
@@ -103,9 +103,9 @@ class HomeScreen extends StatelessWidget {
         ? FloatingActionButton(
             backgroundColor: primaryColor,
             onPressed: () async {
-              await _addTransactionController.updateOperations();
-              await _addTransactionController.updateContragents();
-              _addTransactionController.loadTransaction();
+              // await _addTransactionController.updateOperations();
+              // await _addTransactionController.updateContragents();
+              // _addTransactionController.loadTransaction();
               await Get.to(() => AddTransactionScreen2());
               // _homeController.getTransactions();
             },

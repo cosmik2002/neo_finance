@@ -2,23 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
-import 'package:neo_finance/database_provider.dart';
-import 'package:neo_finance/models/transaction.dart';
 import 'package:neo_finance/screens/add_transaction_screen2.dart';
 
-import '../controllers/add_transaction_controller.dart';
 import '../controllers/home_controller.dart';
 import '../google_sheet_provider.dart';
 
 class ExpenseList extends StatelessWidget {
   final _homeController = Get.find<HomeController>();
-  final AddTransactionController _addTransactionController = Get.find();
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       return ModalProgressHUD(
         progressIndicator: const CircularProgressIndicator(),
-        inAsyncCall: _addTransactionController.isInAsyncCall,
+        inAsyncCall:  _homeController.isInAsyncCall,
         child: ListView.separated(
           itemCount: _homeController.myTransactions.length,
           // reverse: true,
@@ -47,7 +43,7 @@ class ExpenseList extends StatelessWidget {
                     Container(
                         width: 150.w,
                         child: Text(transaction.type == 0
-                            ? '${transaction.to}'
+                            ? transaction.to
                             : '${transaction.from}')
                     ),
                   ]),
@@ -89,18 +85,14 @@ class ExpenseList extends StatelessWidget {
                   if(value == 3) {
                     bool check;
                     if(transaction.row_number != null) {
-                      _addTransactionController.isInAsyncCall = true;
+                      _homeController.isInAsyncCall = true;
                       check = await GoogleSheetsIntegration.checkTransactionToGoogleSheets(transaction, transaction.row_number!);
-                      _addTransactionController.isInAsyncCall = false;
+                      _homeController.isInAsyncCall = false;
                     } else {
                       check = true;
                     }
-                    await _addTransactionController.updateContragents();
-                    await _addTransactionController.updateOperations();
-
                     if(check) {
-                      _addTransactionController.loadTransaction(transaction, idx);
-                      await Get.to(() => AddTransactionScreen2());
+                      await Get.to(() => AddTransactionScreen2(), arguments: {'tm': transaction, 'idx': idx});
                     } else {
                       transaction.status = null;
                       _homeController.updateTransaction(idx, transaction);
