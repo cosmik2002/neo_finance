@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:gsheets/gsheets.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl_standalone.dart';
+import 'package:neo_finance/constants/entity_interface.dart';
 import 'package:neo_finance/models/contragent.dart';
 import 'package:neo_finance/models/lesson.dart';
 import 'package:neo_finance/models/lesson_name.dart';
@@ -10,40 +10,66 @@ import 'package:neo_finance/models/teachers.dart';
 import 'package:neo_finance/models/transaction.dart';
 import 'package:intl/intl.dart';
 
-// import 'package:sqflite/sqflite.dart' as sqlite;
 import 'package:neo_finance/database_provider.dart';
 import 'package:neo_finance/keys.dart';
-import 'package:get/get.dart';
-import 'controllers/add_transaction_controller.dart';
 
 class GoogleSheetsIntegration {
   static const spreadsheetId = '1Jp8RmkW33WeIXTs9f6R6DFryFacJVHH6mUo6dnQkhME';
-  static List<String> operations = [];
   static List<String> lessonNames = [];
   static var settingsSheetTitle = 'позиции';
-  static var operationTypesColumnHeader = 'Тип операции2';
+  static const operationTypesColumnHeader = 'Тип операции2';
+  static var operation2TypesColumnHeader = 'Тип операции';
   static var teachersColumnHeader = 'Учителя';
   static var lessonNamesColumnHeader = 'Предметы';
-  static var transactionSheetTitleRelease = 'Школа 23/24';
+  static const transactionSheetTitleRelease = 'Школа 23/24';
+  static var transaction2SheetTitleRelease = 'Школа 23/24 (копия)';
   static var lessonSheetTitleRelease = 'Учительская';
-  static var transactionSheetTitleDebug = 'Школа 23/24 тест';
+  static const transactionSheetTitleDebug = 'Школа 23/24 тест';
   static var lessonSheetTitleDebug = 'Учительская тест';
-  static var transactionSheetTitle =
+  static const transactionSheetTitle =
       kReleaseMode ? transactionSheetTitleRelease : transactionSheetTitleDebug;
   static var lessonSheetTitle =
       kReleaseMode ? lessonSheetTitleRelease : lessonSheetTitleDebug;
 
-  // static final AddTransactionController _addTransactionController =
-  // Get.put(AddTransactionController());
-
-  static getOperations(sheet, headers) async {
-    var operationCol = headers.indexOf(operationTypesColumnHeader);
+  // var insOpTye = <Future<int> Function (OperationModel)>[];
+  static (int?,int?) _getDtKtCols(List<String> headers, int col) {
+    int?  dtCol, ktCol;
+    if(headers.length <= col+2) {
+      return (dtCol, ktCol);
+    }
+    if(headers[col+1] == 'Д') {
+      dtCol = col+1;
+    }
+    if(headers[col+1] == 'К') {
+      ktCol = col+1;
+    }
+    if(headers[col+2] == 'Д') {
+      dtCol = col+2;
+    }
+    if(headers[col+2] == 'К') {
+      ktCol = col+2;
+    }
+    return (dtCol, ktCol);
+  }
+  static getOperations(sheet, headers, ITraEntity e) async {
+    var operationCol = headers.indexOf(e.operations.columnHeader);
+    List<String> operations = [];
+    List<String> dt = [];
+    List<String> kt = [];
+    var  (dtCol, ktCol) = _getDtKtCols(headers, operationCol);
     if (operationCol != -1) {
       operations = await sheet.values.column(operationCol + 1, fromRow: 2);
-      await DatabaseProvider.deleteAllOperations();
-      for (var operation in operations) {
-        await DatabaseProvider.insertOperation(
-            OperationModel(id: null, name: operation, dt: '', kt: '', type: 0));
+      if(dtCol!=null && ktCol!=null){
+        dt = await sheet.values.column(dtCol + 1, fromRow: 2);
+        kt = await sheet.values.column(ktCol + 1, fromRow: 2);
+      }
+      e.operations.deleteAll();
+      for (var i = 0; i< operations.length; i++) {
+          await e.operations.insert(OperationModel(id: null,
+              name: operations[i].trim(),
+              dt: dt.length > i ? dt[i].trim(): '',
+              kt: kt.length > i ? kt[i].trim(): '',
+              type: 0));
       }
     }
   }
@@ -55,7 +81,7 @@ class GoogleSheetsIntegration {
       await DatabaseProvider.deleteAllTeachers();
       for (var teacher in lessonNames) {
         await DatabaseProvider.insertTeacher(
-            TeacherModel(id: null, name: teacher));
+            TeacherModel(id: null, name: teacher.trim()));
       }
     }
   }
@@ -67,7 +93,7 @@ class GoogleSheetsIntegration {
       await DatabaseProvider.deleteAllLessonNames();
       for (var name in lessonNames) {
         await DatabaseProvider.insertLessonName(
-            LessonNameModel(id: null, name: name));
+            LessonNameModel(id: null, name: name.trim()));
       }
     }
   }
@@ -137,10 +163,10 @@ class GoogleSheetsIntegration {
   }
 
   static Future<(List<TransactionModel>, List<ContragentModel>)>
-      readTransactionsFromGS(Spreadsheet spreadsheet, [int fromRow = 2, int? count]) async {
+      readTransactionsFromGS(Spreadsheet spreadsheet, {int fromRow = 2, int? count, String sheetName=transactionSheetTitle}) async {
     List<TransactionModel> transactionsFromGS = [];
     List<ContragentModel> contragentsFromGS = [];
-    var sheetTra = spreadsheet.worksheetByTitle(transactionSheetTitle);
+    var sheetTra = spreadsheet.worksheetByTitle(sheetName);
     // var fromRow = 2;
     if (sheetTra != null) {
       var transactionsXls = await sheetTra.values.allRows(fromRow: fromRow, count: count ?? -1);
@@ -149,7 +175,7 @@ class GoogleSheetsIntegration {
 
       for (var ti = 0; ti < transactionsXls.length; ti++) {
         var transaction = transactionsXls[ti];
-        if (transaction.isEmpty || int.tryParse(transaction[0]) == null) {
+        if (transaction.isEmpty || int.tryParse(transaction[0]) == null || transaction.length < 5) {
           continue;
         }
         currentDate = epoch.add(Duration(days: int.parse(transaction[0])));
@@ -186,12 +212,12 @@ class GoogleSheetsIntegration {
     return (transactionsFromGS, contragentsFromGS);
   }
 
-  static getTransaction(Spreadsheet spreadsheet) async {
+  static getTransaction(Spreadsheet spreadsheet, ITraEntity e) async {
     var (transactionsFromGS, contragentsFromGS) =
-        await readTransactionsFromGS(spreadsheet);
+        await readTransactionsFromGS(spreadsheet, sheetName: e.transactionSheetTitle);
     var dbContragents = await DatabaseProvider.queryContragents();
     List<Map<String, dynamic>> dbTransactions =
-        await DatabaseProvider.queryTransactions();
+        await e.query();
     List<ContragentModel> contragentsToAdd = [];
     List<ContragentModel> contragentsToUpd = [];
     List<TransactionModel> transactionsToAddList = [];
@@ -238,16 +264,16 @@ class GoogleSheetsIntegration {
     }
 
     for (var transaction in transactionsToAddList) {
-      await DatabaseProvider.insertTransaction(transaction);
+      await e.insert(transaction);
     }
 
     for (var transaction in transactionsToUpd) {
       transaction.status = null;
-      await DatabaseProvider.updateTransaction(transaction, transaction.id!);
+      await e.update(transaction, transaction.id!);
     }
   }
 
-  static Future<Map<String, List<String>>> getDataFromGoogleSheets() async {
+  static getDataFromGoogleSheets() async {
     final gsheets = GSheets(Keys.googleKey);
     final spreadsheet = await gsheets.spreadsheet(spreadsheetId);
     var sheet = spreadsheet.worksheetByTitle(settingsSheetTitle);
@@ -256,10 +282,16 @@ class GoogleSheetsIntegration {
     }
     var headers = await sheet.values.row(1);
     try {
+      var traPref = TransactionPreferences();
+      var tra2Pref = TransactionPreferences2();
       DatabaseProvider.startBatch();
-      await getOperations(sheet, headers);
+      await getOperations(sheet, headers, traPref);
+      await getOperations(sheet, headers, tra2Pref);
       await getTeachers(sheet, headers);
-      await getTransaction(spreadsheet);
+      await getTransaction(spreadsheet, traPref);
+      DatabaseProvider.commitBatch(noResult: true);
+      DatabaseProvider.startBatch();
+      await getTransaction(spreadsheet, tra2Pref);
       await getLessonNames(sheet, headers);
       await getLessons(spreadsheet);
       DatabaseProvider.commitBatch(noResult: true);
@@ -270,17 +302,16 @@ class GoogleSheetsIntegration {
       }
       rethrow;
     }
-    return {'operations': operations, 'teachers': lessonNames};
   }
 
   static Future<int> addTransactionToGoogleSheets(
-      TransactionModel transaction) async {
+      TransactionModel transaction, ITraEntity e) async {
     try {
       final gsheets = GSheets(Keys.googleKey);
       final spreadsheet = await gsheets.spreadsheet(spreadsheetId);
-      var sheet = spreadsheet.worksheetByTitle(transactionSheetTitle);
+      var sheet = spreadsheet.worksheetByTitle(e.transactionSheetTitle);
       // create worksheet if it does not exist yet
-      sheet ??= await spreadsheet.addWorksheet(transactionSheetTitle);
+      sheet ??= await spreadsheet.addWorksheet(e.transactionSheetTitle);
       var lastRow = (await sheet.values.allRows()).length;
 
       // var lastCol = await sheet.cells.lastColumn();
@@ -319,20 +350,20 @@ class GoogleSheetsIntegration {
     return sheet;
   }
 
-  static Future<bool> checkTransactionToGoogleSheets(TransactionModel tra, int row_number) async {
+  static Future<bool> checkTransactionToGoogleSheets(TransactionModel tra, int row_number, ITraEntity e) async {
     final gsheets = GSheets(Keys.googleKey);
     final spreadsheet = await gsheets.spreadsheet(spreadsheetId);
-    var (traGS, ctGs) =  await readTransactionsFromGS(spreadsheet, row_number, 1);
+    var (traGS, ctGs) =  await readTransactionsFromGS(spreadsheet,fromRow: row_number, count: 1,sheetName: e.transactionSheetTitle);
     return traGS.length ==1 && traGS[0] == tra;
   }
 
-  static Future<int> updateTransactionToGoogleSheets(TransactionModel tra, row_number) async {
+  static Future<int> updateTransactionToGoogleSheets(TransactionModel tra, row_number, ITraEntity e) async {
     try {
       final gsheets = GSheets(Keys.googleKey);
       final spreadsheet = await gsheets.spreadsheet(spreadsheetId);
-      var sheet = spreadsheet.worksheetByTitle(transactionSheetTitle);
+      var sheet = spreadsheet.worksheetByTitle(e.transactionSheetTitle);
       // create worksheet if it does not exist yet
-      sheet ??= await spreadsheet.addWorksheet(transactionSheetTitle);
+      sheet ??= await spreadsheet.addWorksheet(e.transactionSheetTitle);
       await initializeDateFormatting('ru', null);
       final DateFormat formatter = DateFormat('MMMM', 'ru');
       if (await sheet.values.insertRow(row_number, [

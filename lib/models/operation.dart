@@ -1,4 +1,6 @@
-class OperationModel {
+import '../constants/model_Interface.dart';
+
+class OperationModel implements IModel{
   final int? id;
   final String? name;
   final String? dt;

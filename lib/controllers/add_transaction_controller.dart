@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:neo_finance/constants/entity_interface.dart';
 import 'package:neo_finance/models/operation.dart';
 import 'package:neo_finance/models/transaction.dart';
 
@@ -34,14 +35,22 @@ class AddTransactionController extends GetxController {
   List<String> _origcontragents = [];
   final Rx<List<String>> _operations = Rx<List<String>>([]);
   final Rx<List<String>> _contragents = Rx<List<String>>([]);
-
+  late ITraEntity traPref;
   @override
   void onInit() {
-    // TODO: implement onInit
     super.onInit();
+    var arg = Get.arguments;
+    if(arg == null){
+      throw Exception("AddTransactionController arguments is null");
+    }
+    var tp = Get.arguments['traPref'];
+    if(tp == null){
+      throw Exception("AddTransactionController traPref is null");
+    }
+    traPref = tp;
     updateOperations();
     updateContragents();
-    if(Get.arguments != null) {
+    if(Get.arguments['tm'] != null) {
       loadTransaction(Get.arguments['tm'], Get.arguments['idx']);
     } else {
       loadTransaction();
@@ -105,6 +114,7 @@ class AddTransactionController extends GetxController {
     _selectedTo.value = tra.to;
     _amount.value = tra.amount ?? 0;
     _row_number = tra.row_number ?? -1;
+    _comment.value = tra.comment ?? '';
   }
 
   filterOperations(filter) {
@@ -116,8 +126,7 @@ class AddTransactionController extends GetxController {
   }
 
   updateOperations() async {
-    List<Map<String, dynamic>> operations =
-        await DatabaseProvider.queryOperations();
+    List<Map<String, dynamic>> operations = await traPref.operations.query();
     _origoperations = List.generate(operations.length, (index) {
       return operations[index]['name'];
     });

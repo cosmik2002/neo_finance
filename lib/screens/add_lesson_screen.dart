@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_simple_calculator/flutter_simple_calculator.dart';
 import 'package:intl/intl.dart';
 import 'package:neo_finance/controllers/add_lesson_controller.dart';
 import 'package:neo_finance/google_sheet_provider.dart';
@@ -17,27 +18,29 @@ class AddLessonScreen extends StatelessWidget {
   AddLessonScreen({Key? key}) : super(key: key);
 
   final AddLessonController _addLessonController =
-      Get.find<AddLessonController>();
+      Get.put(AddLessonController());
   final HomeController _homeController = Get.find<HomeController>();
 
   final _themeController = Get.find<ThemeController>();
 
   final TextEditingController _dateController = TextEditingController();
-  final TextEditingController _hourController = TextEditingController(text: '1');
+  final TextEditingController _hourController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _teacherController = TextEditingController();
   final TextEditingController _lessonController = TextEditingController();
+  final TextEditingController _commentController = TextEditingController();
 
   final DateTime now = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
-    _addLessonController.changeLessonType(LessonModel.TYPE_TEACHER);
+    _addLessonController.lessonType = LessonModel.TYPE_TEACHER;
     _teacherController.text = _addLessonController.selectedTeacher;
     _lessonController.text = _addLessonController.selectedName;
     _dateController.text = _addLessonController.selectedDate;
-    _amountController.text = _addLessonController.amount.toString();
-    _hourController.text = _addLessonController.hour.toString();
+    _amountController.text = _addLessonController.amount != 0 ? _addLessonController.amount.toString() : "";
+    _hourController.text = _addLessonController.hour !=0 ? _addLessonController.hour.toString() : "";
+    _commentController.text = _addLessonController.comment;
     return Obx(() {
       return Scaffold(
         appBar: _appBar(),
@@ -64,7 +67,7 @@ class AddLessonScreen extends StatelessWidget {
                       Icons.keyboard_arrow_down_sharp,
                     )),
                 onChanged: (data){
-                  _addLessonController.updateSelectedTeacher(data);
+                  _addLessonController.selectedTeacher = data;
                 },
               ),
               InputField(
@@ -76,7 +79,7 @@ class AddLessonScreen extends StatelessWidget {
                       Icons.keyboard_arrow_down_sharp,
                     )),
                 onChanged: (data){
-                  _addLessonController.updateSelectedName(data);
+                  _addLessonController.selectedName = data;
                 },
               ),
               InputField(
@@ -84,22 +87,31 @@ class AddLessonScreen extends StatelessWidget {
                 controller: _hourController,
                 isAmount: true,
                 onChanged: (data){
-                  _addLessonController.updateHour(int.tryParse(data) ?? 0);
+                  _addLessonController.hour = int.tryParse(data) ?? 0;
                 },
 
               ),
               InputField(
+                widget:  IconButton(
+                    onPressed: () => _showCalculator(context, _amountController.text),
+                    icon: Icon(
+                      Icons.calculate,
+                    )),
                 controller: _amountController,
                 isAmount: true,
                 label: 'Стоимость',
                 onChanged: (data){
-                  _addLessonController.updateAmount(double.tryParse(data) ?? 0);
+                  _addLessonController.amount = double.tryParse(data) ?? 0;
                 },
               ),
+              InputField(hint: '', label: 'Комментарий', controller: _commentController,
+                onChanged: (data){
+                  _addLessonController.comment = data;
+                },)
             ])),
         floatingActionButton: FloatingActionButton(
           backgroundColor: primaryColor,
-          onPressed: () => _addLesson(),
+          onPressed: () async => await _addLesson(),
           child: Icon(
             _addLessonController.id>=0 ? Icons.edit : Icons.add,
           ),
@@ -109,33 +121,65 @@ class AddLessonScreen extends StatelessWidget {
     });
   }
 
+  _showCalculator (BuildContext context, val) {
+    Get.defaultDialog(
+        content: SizedBox(
+          width: MediaQuery.of(context).size.width * .7,
+          height: MediaQuery.of(context).size.height * .4,
+          child: SimpleCalculator(
+            value: double.tryParse(val) ?? 0,
+            hideExpression: true,
+            onChanged: (key, value, expression) {
+              _amountController.text = value.toString();
+    _addLessonController.amount = value ?? 0;
+              if (key == "=") {
+                Get.back();
+              }
+            },
+          ),
+        )
+    );
+  }
   _showDialog(BuildContext context, bool isTeachers) {
     Get.defaultDialog(
       title: isTeachers ? "Преподаватель" : "Предмет",
       content: SizedBox(
         width: MediaQuery.of(context).size.width * .7,
         height: MediaQuery.of(context).size.height * .4,
-        child: ListView.builder(
-          itemCount:
-              isTeachers ? _addLessonController.teachers.length : _addLessonController.lessonNames.length,
-          itemBuilder: (context, i) {
-            final data = isTeachers ? _addLessonController.teachers[i] : _addLessonController.lessonNames[i];
-            return ListTile(
-              onTap: () {
-                isTeachers
-                    ? _addLessonController.updateSelectedTeacher(data)
-                    : _addLessonController.updateSelectedName(data);
-                isTeachers
-                    ? _teacherController.text = data
-                    : _lessonController.text = data;
-                if(isTeachers){
-                  // _amountController.text = (1000*i).toString();
-                }
-                Get.back();
-              },
-              title: Text(data),
-            );
-          },
+        child: Column(
+          children: [
+            TextField(onChanged: (data){
+              isTeachers
+                  ? _addLessonController.filerTeachers(data)
+                  : _addLessonController.filerLessonNames(data);
+            }),
+            Obx(()=>
+               Expanded(
+                child: ListView.builder(
+                  itemCount:
+                      isTeachers ? _addLessonController.teachers.length : _addLessonController.lessonNames.length,
+                  itemBuilder: (context, i) {
+                    final data = isTeachers ? _addLessonController.teachers[i] : _addLessonController.lessonNames[i];
+                    return ListTile(
+                      onTap: () {
+                        isTeachers
+                            ? _addLessonController.selectedTeacher = data
+                            : _addLessonController.selectedName = data;
+                        isTeachers
+                            ? _teacherController.text = data
+                            : _lessonController.text = data;
+                        if(isTeachers){
+                          // _amountController.text = (1000*i).toString();
+                        }
+                        Get.back();
+                      },
+                      title: Text(data),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -149,8 +193,7 @@ class AddLessonScreen extends StatelessWidget {
         lastDate: DateTime(2122));
 
     if (pickerDate != null) {
-      _addLessonController
-          .updateSelectedDate(DateFormat("dd.MM.yyyy").format(pickerDate));
+      _addLessonController.selectedDate = DateFormat("dd.MM.yyyy").format(pickerDate);
     }
   }
 
@@ -165,7 +208,8 @@ class AddLessonScreen extends StatelessWidget {
       student: _addLessonController.selectedStudent,
       type: _addLessonController.lessonType,
       hours: int.tryParse(_hourController.text),
-      comment: '',
+      comment: _addLessonController.comment,
+      row_number: _addLessonController.row_number
     );
 
     if(_addLessonController.id >=0) {

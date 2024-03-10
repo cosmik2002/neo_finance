@@ -4,11 +4,15 @@ import 'package:get/get.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 import 'package:neo_finance/screens/add_transaction_screen2.dart';
 
+import '../constants/entity_interface.dart';
 import '../controllers/home_controller.dart';
 import '../google_sheet_provider.dart';
 
 class ExpenseList extends StatelessWidget {
   final _homeController = Get.find<HomeController>();
+  final ITraEntity e;
+  ExpenseList(this.e, {super.key});
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
@@ -16,12 +20,12 @@ class ExpenseList extends StatelessWidget {
         progressIndicator: const CircularProgressIndicator(),
         inAsyncCall:  _homeController.isInAsyncCall,
         child: ListView.separated(
-          itemCount: _homeController.myTransactions.length,
+          itemCount: _homeController.getTransactionsListValues(e).length,
           // reverse: true,
           separatorBuilder: (c, i) => const Divider(height: 0),
           itemBuilder: (context, i) {
-            int idx = _homeController.myTransactions.length - i - 1;
-            final transaction = _homeController.myTransactions[idx];
+            int idx = _homeController.getTransactionsListValues(e).length - i - 1;
+            final transaction = _homeController.getTransactionsListValues(e)[idx];
             final statusEmpty = transaction.status?.isEmpty ?? true;
             return ListTile(
               title: Row(children: [
@@ -69,16 +73,16 @@ class ExpenseList extends StatelessWidget {
               trailing: PopupMenuButton<int>(
                 onSelected: (int? value) async {
                   if (value == 2) {
-                    _homeController.deleteTransaction(idx);
+                    _homeController.deleteTransaction(e, idx);
                   }
                   if (value == 1) {
                     GoogleSheetsIntegration.addTransactionToGoogleSheets(
-                            transaction)
+                            transaction, e)
                         .then((value) {
                       if (value >= 0) {
                         transaction.row_number = value;
                         transaction.status = '1';
-                        _homeController.updateTransaction(idx, transaction);
+                        _homeController.updateTransaction(e, idx, transaction);
                       }
                     });
                   }
@@ -86,16 +90,16 @@ class ExpenseList extends StatelessWidget {
                     bool check;
                     if(transaction.row_number != null) {
                       _homeController.isInAsyncCall = true;
-                      check = await GoogleSheetsIntegration.checkTransactionToGoogleSheets(transaction, transaction.row_number!);
+                      check = await GoogleSheetsIntegration.checkTransactionToGoogleSheets(transaction, transaction.row_number!, e);
                       _homeController.isInAsyncCall = false;
                     } else {
                       check = true;
                     }
                     if(check) {
-                      await Get.to(() => AddTransactionScreen2(), arguments: {'tm': transaction, 'idx': idx});
+                      await Get.to(() => AddTransactionScreen2(e), arguments: {'tm': transaction, 'idx': idx, 'traPref': e});
                     } else {
                       transaction.status = null;
-                      _homeController.updateTransaction(idx, transaction);
+                      _homeController.updateTransaction(e, idx, transaction);
                     }
                   }
                 },
@@ -114,14 +118,14 @@ class ExpenseList extends StatelessWidget {
                           child: Text('Синхронизировать'),
                         ));
                   }
-                  // if(transaction.row_number != null) {
+                  if(transaction.row_number != null || transaction.status == null) {
                     items.insert(
                         1,
                         const PopupMenuItem<int>(
                           value: 3,
                           child: Text('Редактировать'),
                         ));
-                  // }
+                  }
                   return items;
                 },
               ),

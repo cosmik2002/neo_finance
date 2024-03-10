@@ -4,27 +4,27 @@ import 'package:neo_finance/models/contragent.dart';
 import 'package:neo_finance/models/lesson.dart';
 import 'package:neo_finance/models/lesson_name.dart';
 import 'package:neo_finance/models/student.dart';
-import 'package:neo_finance/models/transaction.dart';
 import 'package:get/get.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
-import 'dart:io';
 
-import 'models/operation.dart';
 import 'models/teachers.dart';
 
 class DatabaseProvider {
   static Database? _db;
-  static const int _version = 5;
+  static const int _version = 6;
   static const String _transactionsTableName = 'transactions';
+  static const String _transactions2TableName = 'transactions2';
   static const String _lessonsTableName = 'lessons';
   static const String _lessonNamesTableName = 'lesson_names';
   static const String _operationsTableName = 'operations';
+  static const String _operations2TableName = 'operations2';
   static const String _teachersTableName = 'teachers';
   static const String _contragentsTableName = 'contragents';
   static const String _studentsTableName = 'students';
   static const String _dbName = 'expenses.db';
   static Batch? batch;
+
+  static Database? get db=> _db;
 
   static Future<void> initDb() async {
     if (_db != null) {
@@ -74,7 +74,25 @@ class DatabaseProvider {
       case 5:
         await _databaseVersion5(db);
         break;
+      case 6:
+        await _databaseVersion6(db);
+        break;
     }
+  }
+
+  static _databaseVersion6(Database db) {
+    db.execute(
+      '''CREATE TABLE $_transactions2TableName(id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, amount REAL, comment TEXT, operation TEXT, "from" TEXT, "to" TEXT, status TEXT);''',
+    );
+    db.execute(
+      '''CREATE TABLE $_operations2TableName(id INTEGER PRIMARY KEY AUTOINCREMENT, name, dt TEXT, kt TEXT);''',
+    );
+    var sql = "ALTER TABLE $_operations2TableName ADD COLUMN type int not null default 0";
+    db.execute(sql);
+    sql = "ALTER TABLE $_transactions2TableName ADD COLUMN type int not null default 0";
+    db.execute(sql);
+    sql = "ALTER TABLE $_transactions2TableName ADD COLUMN row_number int";
+    db.execute(sql);
   }
 
   static _databaseVersion5(Database db) {
@@ -190,20 +208,12 @@ class DatabaseProvider {
     return await _db!.delete(table);
   }
 
-  static Future<int> insertTransaction(TransactionModel expense) async {
-    return insertTable(_transactionsTableName, expense.toMap());
-  }
-
   static Future<int> insertLesson(LessonModel lesson) async {
     return insertTable(_lessonsTableName, lesson.toMap());
   }
 
   static Future<int> insertLessonName(LessonNameModel lesson_name) async {
     return insertTable(_lessonNamesTableName, lesson_name.toMap());
-  }
-
-  static Future<int> insertOperation(OperationModel op) async {
-    return insertTable(_operationsTableName, op.toMap());
   }
 
   static Future<int> insertTeacher(TeacherModel tc) async {
@@ -218,20 +228,12 @@ class DatabaseProvider {
     return insertTable(_contragentsTableName, tc.toMap());
   }
 
-  static Future<int> deleteAllTransactions() async {
-    return emptyTable(_transactionsTableName);
-  }
-
   static Future<int> deleteAllLessons() async {
     return emptyTable(_lessonsTableName);
   }
 
   static Future<int> deleteAllLessonNames() async {
     return emptyTable(_lessonNamesTableName);
-  }
-
-  static Future<int> deleteAllOperations() async {
-    return emptyTable(_operationsTableName);
   }
 
   static Future<int> deleteAllTeachers() async {
@@ -246,17 +248,8 @@ class DatabaseProvider {
     return emptyTable(_contragentsTableName);
   }
 
-  static Future<int> deleteTransaction(int id) async {
-    return deleteTable(_transactionsTableName, where: 'id=?', whereArgs: [id]);
-  }
-
   static Future<int> deleteLesson(int id) async {
     return deleteTable(_lessonsTableName, where: 'id=?', whereArgs: [id]);
-  }
-
-  static Future<int> updateTransaction(TransactionModel em, int id) async {
-    return updateTable(_transactionsTableName, em.toMap(),
-        where: "id = ?", whereArgs: [id]);
   }
 
   static Future<int> updateLesson(LessonModel em, int id) async {
@@ -267,10 +260,6 @@ class DatabaseProvider {
   static Future<int> updateContragent(ContragentModel em, int id) async {
     return updateTable(_contragentsTableName, em.toMap(),
         where: "id = ?", whereArgs: [id]);
-  }
-
-  static Future<List<Map<String, dynamic>>> queryTransactions() async {
-    return queryTable(_transactionsTableName, orderBy: "(substr(date,7,4) || substr(date,4,2)||substr(date,1,2))");
   }
 
   static Future<List<Map<String, dynamic>>> queryLessons() async {
@@ -293,7 +282,4 @@ class DatabaseProvider {
     return queryTable(_contragentsTableName, orderBy: "name");
   }
 
-  static Future<List<Map<String, dynamic>>> queryOperations() async {
-    return queryTable(_operationsTableName, orderBy: "name");
-  }
 }

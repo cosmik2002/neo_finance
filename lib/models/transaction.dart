@@ -1,4 +1,6 @@
-class TransactionModel {
+import 'package:neo_finance/constants/model_Interface.dart';
+
+class TransactionModel implements IModel{
   int? id;
   final String date;
   final double? amount;

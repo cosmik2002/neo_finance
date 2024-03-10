@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_simple_calculator/flutter_simple_calculator.dart';
 import 'package:intl/intl.dart';
+import 'package:neo_finance/constants/entity_interface.dart';
 import 'package:neo_finance/controllers/home_controller.dart';
 import 'package:neo_finance/google_sheet_provider.dart';
 
@@ -15,7 +16,8 @@ import '../models/transaction.dart';
 import '../widgets/input_field.dart';
 
 class AddTransactionScreen2 extends StatelessWidget {
-  AddTransactionScreen2({Key? key}) : super(key: key);
+  ITraEntity e;
+  AddTransactionScreen2(this.e, {Key? key}) : super(key: key);
 
   final AddTransactionController _addTransactionController =
       Get.put(AddTransactionController());
@@ -117,7 +119,7 @@ class AddTransactionScreen2 extends StatelessWidget {
           ])),
         floatingActionButton: FloatingActionButton(
           backgroundColor: primaryColor,
-          onPressed: () => _addTransaction(),
+          onPressed: () async => await _addTransaction(),
           child: Icon(
             _addTransactionController.id>=0 ? Icons.edit : Icons.add,
           ),
@@ -229,31 +231,34 @@ class AddTransactionScreen2 extends StatelessWidget {
       from: _addTransactionController.selectedFrom,
       to: _addTransactionController.selectedTo, //_toController.text,
       comment: _addTransactionController.comment,
+      row_number: _addTransactionController.row_number,
       type: 0
     );
     if(_addTransactionController.id >= 0) {
       transactionModel.status = null;
       transactionModel.id = _addTransactionController.id;
-      await DatabaseProvider.updateTransaction(transactionModel, _addTransactionController.id);
-      GoogleSheetsIntegration.updateTransactionToGoogleSheets(transactionModel, _addTransactionController.row_number).then(
+      e.update(transactionModel, _addTransactionController.id);
+      // await DatabaseProvider.updateTransaction(transactionModel, _addTransactionController.id);
+      GoogleSheetsIntegration.updateTransactionToGoogleSheets(transactionModel, _addTransactionController.row_number, e).then(
               (value) {
                 if(value == 0) {
                   transactionModel.status = '1';
-                  _homeController.updateTransaction(_addTransactionController.idx, transactionModel);
+                  _homeController.updateTransaction(e, _addTransactionController.idx, transactionModel);
                 }
               });
     } else {
-      await DatabaseProvider.insertTransaction(transactionModel);
+      e.insert(transactionModel);
+      // await DatabaseProvider.insertTransaction(transactionModel);
       var id = await DatabaseProvider.getInsrtedId();
       transactionModel.id = id;
-      _homeController.myTransactions.add(transactionModel);
-      int idx = _homeController.myTransactions.length - 1;
+      _homeController.getTransactionsListValues(e).add(transactionModel);
+      int idx = _homeController.getTransactionsListValues(e).length - 1;
       GoogleSheetsIntegration.addTransactionToGoogleSheets(
-          transactionModel).then((value) {
+          transactionModel, e).then((value) {
             if(value>=0) {
               transactionModel.status = '1';
               transactionModel.row_number = value;
-              _homeController.updateTransaction(idx, transactionModel);
+              _homeController.updateTransaction(e, idx, transactionModel);
             }
       });
     }

@@ -12,15 +12,15 @@ import '../screens/add_lesson_screen.dart';
 
 class LessonsList extends StatelessWidget {
   final _homeController = Get.find<HomeController>();
-  final _addLessonController = Get.find<AddLessonController>();
-  bool _isInAsyncCall = false;
+  // final _addLessonController = Get.find<AddLessonController>();
+  // bool _isInAsyncCall = false;
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       return ModalProgressHUD(
         progressIndicator: const CircularProgressIndicator(),
-        inAsyncCall: _addLessonController.isInAsyncCall,
+        inAsyncCall: _homeController.isInAsyncCall,
         child: ListView.separated(
           itemCount: _homeController.lessons.length,
           separatorBuilder: (c, i) => const Divider(height: 0),
@@ -70,19 +70,19 @@ class LessonsList extends StatelessWidget {
                     _homeController.deleteLesson(idx);
                   }
                   if (value == 3) {
-                    _addLessonController.isInAsyncCall = true;
-                    await _addLessonController.updateTeachers();
-                    await _addLessonController.updateLessonNames();
+                    _homeController.isInAsyncCall = true;
+                    // await _addLessonController.updateTeachers();
+                    // await _addLessonController.updateLessonNames();
                     var check = await GoogleSheetsIntegration.checkLessonToGoogleSheets(lesson, lesson.row_number!);
                     if(check) {
-                      _addLessonController.isInAsyncCall = false;
-                      _addLessonController.loadLesson(lesson, idx);
-                      await Get.to(() => AddLessonScreen(), arguments: lesson);
+                      _homeController.isInAsyncCall = false;
+                      // _addLessonController.loadLesson(lesson, idx);
+                      await Get.to(() => AddLessonScreen(), arguments: {"lesson": lesson, 'idx': idx});
                       // _homeController.getLessons();
                     } else {
                       lesson.status = null;
                       _homeController.updateLesson(idx, lesson);
-                      _addLessonController.isInAsyncCall = false;
+                      _homeController.isInAsyncCall = false;
                     }
                   }
                   if (value == 1) {
